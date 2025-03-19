@@ -3,5 +3,6 @@
 		"lib/**/*.jar",
 		"algs4.jar",
 		"gson.jar"
-	]
+	],
+	"java.debug.settings.onBuildFailureProceed": true
 }
