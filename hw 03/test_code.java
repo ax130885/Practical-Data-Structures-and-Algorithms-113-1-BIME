@@ -71,32 +71,84 @@ class member {
 
 class DefenseSystem {
 
-    // version 3 自己寫 stack
-    public class MyStack {
+    // version 4 自己寫 stack (linked list 版本) (效能不會比較好)
+    public static class MyStack_LinkList {
+
+        private static class Node {
+            int value = 0;
+            Node next = null; // next 是更底層
+        }
+
+        Node top = null;
+
+        private boolean isEmpty() {
+            return top == null;
+        }
+
+        public void push(int i) {
+            if (isEmpty()) {
+                top = new Node();
+                top.value = i;
+                top.next = null;
+            } else {
+                Node old = top;
+                top = new Node();
+                top.value = i;
+                top.next = old;
+            }
+
+        }
+
+        public int pop() {
+            if (isEmpty()) {
+                throw new RuntimeException("pop when stack is empty");
+            }
+
+            int ans = top.value;
+            top = top.next;
+
+            return ans;
+
+        }
+
+        public int peek() {
+            if (isEmpty()) {
+                throw new RuntimeException("peek when stack is empty");
+            }
+
+            return top.value;
+        }
+
+    }
+
+    // version 3 自己寫 stack (陣列版本)
+    public class MyStack_Array {
 
         int size = 65535;
         int[] stack = new int[size];
         int top = -1;
 
         private void resize(int newSize) {
-            int[] oldStack = stack;
-            stack = new int[newSize]; // 創建更大的 stack 陣列
+            int[] oldStack = this.stack;
+            this.stack = new int[newSize]; // 創建更大的 stack 陣列
 
             // 複製舊數據
             for (int i = 0; i < oldStack.length; i++) {
-                stack[i] = oldStack[i];
+                this.stack[i] = oldStack[i];
             }
 
-            size = newSize; // 更新 stack 大小
+            // 如果在C++ 需要手動 delete oldStack
+            // 但是在Java中，由於Java具有自動垃圾回收機制，所以不需要手動刪除舊數據。
+
         }
 
         private boolean isEmpty() {
-            return (top == -1);
+            return (this.top == -1);
         }
 
         private void ensureCapacity() {
-            if (top == size - 1) {
-                resize(size * 2);
+            if (this.top == this.size - 1) {
+                resize(this.size *= 2);
             }
         }
 
@@ -106,12 +158,12 @@ class DefenseSystem {
             if (isEmpty()) {
                 throw new RuntimeException("peek when stack is empty");
             }
-            return stack[top];
+            return this.stack[this.top];
         }
 
         public void push(int i) {
             ensureCapacity();
-            stack[++top] = i;
+            this.stack[++this.top] = i;
         }
 
         public int pop() {
@@ -120,7 +172,7 @@ class DefenseSystem {
                 throw new RuntimeException("pop when stack is empty");
             }
 
-            return stack[top--];
+            return this.stack[this.top--];
 
         }
 
@@ -135,7 +187,8 @@ class DefenseSystem {
         // 不會存放中間值的原理是依靠 pop ，把所有現在塔攻擊力低的清掉。
         // 最後把自己加到 stack 最上方
         int[] left = new int[n];
-        MyStack stack = new MyStack();
+        // MyStack_Array stack = new MyStack_Array();
+        MyStack_LinkList stack = new MyStack_LinkList();
         for (int i = 0; i < n; i++) {
             // 如果stack不是空的，且目前塔的攻擊力比stack最上面塔的攻擊力還要高，就pop掉，檢查stack下一個塔的攻擊力。
             while (!stack.isEmpty() && levels[stack.peek()] < levels[i]) {
@@ -152,7 +205,8 @@ class DefenseSystem {
 
         // 預處理右邊界
         int[] right = new int[n];
-        stack = new MyStack();
+        // stack = new MyStack_Array();
+        stack = new MyStack_LinkList();
         for (int i = n - 1; i >= 0; i--) {
             while (!stack.isEmpty() && levels[stack.peek()] < levels[i]) {
                 stack.pop();
