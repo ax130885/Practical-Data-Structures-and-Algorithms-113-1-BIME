@@ -8,27 +8,71 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 class ZombieSimulation {
+    private int currentDay = 1;
 
-    public ZombieSimulation(int[] Num_Of_Citizen) {
-        // Initialization code here
+    public ZombieSimulation(int[] initialCitizens) {
+        // The initial number of citizens in each city is set here.
     }
 
-    public int CityWithTheMostZombies(int date){
-        // Implementation here
-        return 0;
+    public void zombieAttackPlan(int city, int day) {
+        // A zombie horde attacks the specified city on the given day.
     }
 
-    public void zombieAttackPlan(int city, int date){
-        // Implementation here
+    public void TravelPlan(int numberOfTraveller, int fromCity, int toCity, int departureDay, int arrivalDay) {
+        // Record the travel plans between cities.
+        // Travelers may carry the overrun condition from one city to another.
     }
 
-    public void TravelPlan(int NumberOfTraveller, int FromCity, int ToCity, int DateOfDeparture, int DateOfArrival){
-        // Implementation here
+    public int CityWithTheMostZombies(int day) {
+        // Return the index of the city with the highest number of overrun citizens.
+        // If more than one city has the same number, return the one with the larger
+        // index.
+        // Return -1 if no city is overrun.
+        return -1;
     }
 
-    public static void main(String[] args){
-        new Test(args);
+    public static void main(String[] args) {
+        ZombieSimulation sim = new ZombieSimulation(new int[] { 10, 100, 15, 25, 10, 13 });
+
+        sim.zombieAttackPlan(0, 1);
+        sim.zombieAttackPlan(4, 3);
+        sim.TravelPlan(3, 0, 3, 3, 4);
+        sim.TravelPlan(3, 4, 0, 3, 4);
+
+        System.out.println(sim.CityWithTheMostZombies(2));
+        // Expected output = 0
+
+        sim.zombieAttackPlan(5, 5);
+        sim.TravelPlan(1, 5, 0, 5, 6);
+
+        System.out.println(sim.CityWithTheMostZombies(4));
+        // Expected output = 3
+        System.out.println(sim.CityWithTheMostZombies(8));
+        // Expected output = 5
+
+        // For clarity, here is an example of how the simulation might evolve:
+        // Day 1: Cities: {10, 100, 15, 25, 10, 13}
+        // Overrun status: {1, 0, 0, 0, 0, 0}
+        // Day 2: Cities: {10, 100, 15, 25, 10, 13}
+        // Overrun status: {1, 0, 0, 0, 0, 0}
+        // Day 3: Cities: {7, 100, 15, 25, 7, 13} // Citizens deducted due to clearance
+        // operations
+        // Overrun status: {1, 0, 0, 0, 1, 0}
+        // Day 4: Cities: {10, 100, 15, 28, 7, 13}
+        // Overrun status: {1, 0, 0, 1, 1, 0}
+        // Day 5: Cities: {10, 100, 15, 28, 7, 12}
+        // Overrun status: {1, 0, 0, 1, 1, 1}
+        // Day 6: Cities: {11, 100, 15, 28, 7, 12}
+        // Overrun status: {1, 0, 0, 1, 1, 1}
+        // Day 7: Cities: {11, 100, 15, 28, 7, 12}
+        // Overrun status: {1, 0, 0, 1, 0, 1}
+        // Day 8: Cities: {11, 100, 15, 28, 7, 12}
+        // Overrun status: {0, 0, 0, 0, 0, 1}
     }
+
+    // public static void main(String[] args){
+    // new Test(args);
+    // }
 }
 
 class Test {
@@ -65,10 +109,10 @@ class Test {
                             break;
                         case "TravelPlan":
                             g.TravelPlan(arg.get(0).getAsInt(),
-                                         arg.get(1).getAsInt(),
-                                         arg.get(2).getAsInt(),
-                                         arg.get(3).getAsInt(),
-                                         arg.get(4).getAsInt());
+                                    arg.get(1).getAsInt(),
+                                    arg.get(2).getAsInt(),
+                                    arg.get(3).getAsInt(),
+                                    arg.get(4).getAsInt());
                             break;
                         case "CityMax":
                             count++;
