@@ -13,7 +13,7 @@ hw05: https://hackmd.io/@CiqLOooyRwWmK--mMkfetA/BJ7EdE2jye
 Supplementary 05_1: 實作 Knuth Shuffle, Bubble Sort, Selection Sort, Insertion Sort, Shell Sort (分治的 Insert sort).  
 Supplementary 05_2: 實作 Merge Sort, Quick Sort (Median of 3), 3 Way Quick Sort.  
 Supplementary 05_3: 實作 Heap Sort.  
-hw06: https://hackmd.io/@CiqLOooyRwWmK--mMkfetA/r1jOYE2iye
+hw06:(Event Queue) https://hackmd.io/@CiqLOooyRwWmK--mMkfetA/r1jOYE2iye
 
 
 考慮用哪種 sort 應該要考慮
