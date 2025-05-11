@@ -8,9 +8,14 @@ class GalacticClustering {
      * 優化點：不再保存所有點，改用質心(centroid)和點數量(size)計算合併
      * 這樣可以大幅減少記憶體使用和合併時間
      */
-    private static class Cluster {
+    public static class Cluster {
         double cx, cy; // 質心座標
         int size; // 點的數量
+
+        // 取得質心座標
+        public Point2D getCentroid() {
+            return new Point2D(cx, cy);
+        }
 
         // 用單個點初始化聚類
         Cluster(double x, double y) {
@@ -98,12 +103,15 @@ class GalacticClustering {
             }
         }
 
+        // 記錄已被移除的聚類
+        Set<Cluster> removedClusters = new HashSet<>();
+
         // 層次聚類主循環
         while (activeClusters.size() > targetClusterCount) {
             ClusterPair closest = pq.poll();
 
             // 如果這對聚類已不再活躍，跳過
-            if (!activeClusters.contains(closest.c1) || !activeClusters.contains(closest.c2)) {
+            if (removedClusters.contains(closest.c1) || removedClusters.contains(closest.c2)) {
                 continue;
             }
 
@@ -114,6 +122,10 @@ class GalacticClustering {
             activeClusters.remove(closest.c1);
             activeClusters.remove(closest.c2);
             activeClusters.add(merged);
+
+            // 標記已移除的聚類
+            removedClusters.add(closest.c1);
+            removedClusters.add(closest.c2);
 
             // 計算新聚類與所有其他活躍聚類的距離
             for (Cluster c : activeClusters) {
