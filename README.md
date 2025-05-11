@@ -15,7 +15,8 @@ Supplementary 05_2: 實作 Merge Sort, Quick Sort (Median of 3), 3 Way Quick Sor
 Supplementary 05_3: 實作 Heap Sort.  
 hw06(Event Queue): https://hackmd.io/@CiqLOooyRwWmK--mMkfetA/r1jOYE2iye  
 hw07(質心分群 centroid hierarchical clustering algorithm): https://hackmd.io/@CiqLOooyRwWmK--mMkfetA/HkHS8UcC1x  
-Supplementary 07_1: 實作 紅黑樹  
+Supplementary 07_1: 實作 紅黑樹 KD樹 
+hw08(2D interval search): https://hackmd.io/@CiqLOooyRwWmK--mMkfetA/HkoBID501g
 
 ## 筆記
 考慮用哪種 sort 應該要考慮  
