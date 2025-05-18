@@ -15,8 +15,10 @@ Supplementary 05_2: 實作 Merge Sort, Quick Sort (Median of 3), 3 Way Quick Sor
 Supplementary 05_3: 實作 Heap Sort.  
 hw06(Event Queue): https://hackmd.io/@CiqLOooyRwWmK--mMkfetA/r1jOYE2iye  
 hw07(質心分群 centroid hierarchical clustering algorithm): https://hackmd.io/@CiqLOooyRwWmK--mMkfetA/HkHS8UcC1x  
-Supplementary 07_1: 實作 紅黑樹 KD樹 
-hw08(2D interval search): https://hackmd.io/@CiqLOooyRwWmK--mMkfetA/HkoBID501g
+Supplementary 07_1: 實作 紅黑樹 KD樹  
+hw08(2D interval search): https://hackmd.io/@CiqLOooyRwWmK--mMkfetA/HkoBID501g  
+hw09: https://hackmd.io/@CiqLOooyRwWmK--mMkfetA/SyROxKmlgg  
+
 
 ## 筆記
 考慮用哪種 sort 應該要考慮  
@@ -42,13 +44,16 @@ Symbol Table 實作方法:
 	- case3. 刪除節點的兩根腳都有值: 找左邊的最大(往左走一步後往右走到底)或是右邊的最小(往右走一步後往左走到底)，來取代要被刪除的位置。  
   			具體方式為先把原本被取代(10)和要取代的(15)都先複製起來，把複製的要取代節點(15)兩腳都設為與被取代的相同。刪掉原本要取代的節點(15)(因為一定在最底部，所以很好刪)。  
 			最後回傳新增的複製節點位置(15)，再手動把父節點或根節點的位置重新接到回傳值。被刪除的節點，因為沒人指到他會自己被回收。  
-4. 紅黑樹: https://www.bilibili.com/video/BV1piF6erE7Y?spm_id_from=333.788.videopod.sections&vd_source=a7ec40e3a00a70629191f9c178661833  
+4. 遍歷二元樹的方法 preorder, inorder, postorder (https://www.shubo.io/iterative-binary-tree-traversal/)
+5. 紅黑樹: https://www.bilibili.com/video/BV1piF6erE7Y?spm_id_from=333.788.videopod.sections&vd_source=a7ec40e3a00a70629191f9c178661833  
+
 
 ## 幾何搜尋
-113-2-PDSA-20250502-h2  
-1. KD-tree: 應用於 range search & nearest neighbor,  
-2. interval search tree
-![alt text](image-1.png)
+1. KD-tree: 應用於 range search & nearest neighbor (113-2-PDSA-20250502-h2)  
+2. interval search tree (113-2-PDSA-20250502-h2)
+   ![alt text](image-1.png)
+3. 無向圖
+4. 有向圖
 
 
 # 作業繳交網址:

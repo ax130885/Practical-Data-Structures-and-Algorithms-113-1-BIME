@@ -1,0 +1,115 @@
+import java.io.FileReader;
+import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import com.google.gson.Gson;
+
+class OutputFormat {
+    double[][] boxes;
+    int[] dogs_to_remove;
+    int overlap_threshold;
+}
+
+class TestCase {
+    int Case;
+    int score;
+    ArrayList<OutputFormat> data;
+}
+
+class Dog_catcher {
+    private double[][] territories;
+    private int overlap_threshold;
+    private int[] overlapCounts;
+
+    public Dog_catcher(double[][] territories, int overlap_threshold) {
+        this.territories = territories;
+        this.overlap_threshold = overlap_threshold;
+        this.overlapCounts = new int[territories.length];
+        calculateOverlaps();
+    }
+
+    // 計算每個領土與其他領土的重疊數量
+    private void calculateOverlaps() {
+        for (int i = 0; i < territories.length; i++) {
+            for (int j = i + 1; j < territories.length; j++) {
+                if (isOverlapping(territories[i], territories[j])) {
+                    overlapCounts[i]++;
+                    overlapCounts[j]++;
+                }
+            }
+        }
+    }
+
+    // 檢查兩個領土是否重疊
+    private boolean isOverlapping(double[] a, double[] b) {
+        // 檢查x軸重疊
+        boolean xOverlap = a[0] <= b[0] + b[2] && b[0] <= a[0] + a[2];
+        // 檢查y軸重疊
+        boolean yOverlap = a[1] <= b[1] + b[3] && b[1] <= a[1] + a[3];
+        return xOverlap && yOverlap;
+    }
+
+    public int[] dogs_to_remove() {
+        List<Integer> result = new ArrayList<>();
+        for (int i = 0; i < overlapCounts.length; i++) {
+            if (overlapCounts[i] >= overlap_threshold) {
+                result.add(i);
+            }
+        }
+        return result.stream().mapToInt(i -> i).toArray();
+    }
+
+    public static void main(String[] args) {
+        // 範例測試
+        double territories[][] = new double[][] {
+                { 0.02, 0.01, 0.1, 0.05 }, // => index = 0
+                { 0.04, 0.02, 0.1, 0.05 }, // => index = 1
+                { 0.06, 0.03, 0.1, 0.05 }, // => index = 2
+                { 0.08, 0.04, 0.1, 0.05 }, // => index = 3
+                { 0.24, 0.01, 0.1, 0.05 }, // => index = 4
+                { 0.20, 0.00, 0.1, 0.05 }, // => index = 5
+                { 0.28, 0.02, 0.1, 0.05 }, // => index = 6
+                { 0.32, 0.03, 0.1, 0.05 }, // => index = 7
+                { 0.36, 0.04, 0.1, 0.05 }, // => index = 8
+        };
+        int overlap_threshold = 4;
+        Dog_catcher sol = new Dog_catcher(territories, overlap_threshold);
+        int[] result = sol.dogs_to_remove();
+        System.out.println(Arrays.toString(result));
+
+        // 使用JSON檔案進行測試 (取消註解以下代碼)
+        /*
+         * String filePath = "testcase.json";
+         * Gson gson = new Gson();
+         * int num_ac = 0;
+         * 
+         * try {
+         * TestCase[] testCases = gson.fromJson(new FileReader(filePath),
+         * TestCase[].class);
+         * 
+         * for (int i = 0; i < testCases.length; ++i) {
+         * int problem = 0;
+         * for (OutputFormat data : testCases[i].data) {
+         * int[] ans = data.dogs_to_remove;
+         * Dog_catcher sol = new Dog_catcher(data.boxes, data.overlap_threshold);
+         * int[] result = sol.dogs_to_remove();
+         * boolean correctness = Arrays.equals(ans, result);
+         * if (correctness) {
+         * num_ac++;
+         * } else {
+         * System.out.println("=== Wrong answer detected! ===");
+         * System.out.println("Case " + i + " Problem " + problem + " failed.");
+         * System.out.println("Got: " + Arrays.toString(result));
+         * System.out.println("Expected: " + Arrays.toString(ans));
+         * }
+         * problem++;
+         * }
+         * }
+         * System.out.println("Score: " + num_ac + "/10");
+         * } catch (FileNotFoundException e) {
+         * e.printStackTrace();
+         * }
+         */
+    }
+}
