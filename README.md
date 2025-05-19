@@ -52,8 +52,26 @@ Symbol Table 實作方法:
 1. KD-tree: 應用於 range search & nearest neighbor (113-2-PDSA-20250502-h2)  
 2. interval search tree (113-2-PDSA-20250502-h2)
    ![alt text](image-1.png)
-3. 無向圖
-4. 有向圖
+
+## 圖
+1. 無向圖
+   ![鄰接表概念](image-3.png)
+   ![鄰接表實作](image-2.png)
+   ![DFS概念](image-6.png)
+   ![DFS實作](image-4.png)
+   ![BFS概念](image-7.png)
+   ![BFS實作](image-5.png) <!-- 迴圈內比一開始初始化多了edgeTo[w]=v，還有distTo[w]邏輯不同 -->
+   ![連接組件(CC)概念](image-10.png)
+   ![連接組件(CC)實作1](image-8.png)
+   ![連接組件(CC)實作2](image-9.png)
+   ![難度](image-11.png) <!-- 4.biconnected compoment指的是，有沒有點移除以後會導致CC失效的。 -->
+   <!-- 6. 尤拉路徑: 一筆畫，每個邊只能經過一次(簡單)。 -->
+   <!-- 7. 漢米爾頓路徑: 一筆畫，每個頂點只能經過一次(超難)。 -->
+   <!-- 8. Bipartite graph (二分圖): 所有頂點分為兩群(紅、白)，所有紅點只能連到白點，所有白點只能連到紅點。-->
+   <!-- 9. planarity 畫出平面圖，沒有邊交叉(重疊)。 -->
+   <!-- 10. 在交換元素後，問兩張圖是不是一樣。 -->
+
+2. 有向圖
 
 
 # 作業繳交網址:
