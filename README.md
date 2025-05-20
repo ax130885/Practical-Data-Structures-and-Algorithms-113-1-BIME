@@ -72,6 +72,37 @@ Symbol Table 實作方法:
    <!-- 10. 在交換元素後，問兩張圖是不是一樣。 -->
 
 2. 有向圖
+   拓樸排序 Directed acyclic graph, (DAG)  
+   使用 DST + stack 紀錄結果  
+   結果不唯一  
+   DAG 一定沒有迴圈  
+3. Minumum Spanning Tree, (MST) 最小生成樹 (假設圖都連接、每個邊的權重都不同，這樣結果必定唯一。)
+   原本的圖可能會有多個冗餘的邊，如何用最少的邊，把圖中的所有頂點連起來。  
+   其中生成樹的所有邊必須相連(不能是兩個斷開的子圖)，必定沒有迴圈。  
+4. 圖的 cut property (必考):
+   - 【性質定義】
+      任意切一刀，把圖中的點分為兩群，刀子經過的邊為 crossing edge。  
+      該圖的MST路徑，必定包含所有 crossing edge 當中，權重最小的 crossing edge。
+   - 【證明-反證法】(必考):
+      假設我們的最小生成樹（MST）沒有包含這條權重最小的 crossing edge（記為 e），
+      那麼 MST 必定包含其他 crossing edge（記為 f），因為要連接兩邊的點，所以必定會使用到 crossing edge。
+      因為 e 的權重比 f 小（e 是所有 crossing edge 中最小的），
+      如果我們把 MST 中的 f 換成 e，新的樹會比原本的 MST 權重更小。
+      這代表使用 f 的 MST 違反了「最小」的定義。
+      因此，假設不成立，所有 crossing edge 中權重最小的那一條，一定會在 MST 當中。
+
+      ![cut property](image-12.png)
+
+5. 貪心 MST 算法:
+   每次切一刀後，得到 minumum crossing edge 的兩個點。  
+   在以後切的時候，都必須在同一邊，不能被切開。  
+   重複切 v-1 次，即可得到 MST。
+   不管怎麼切，只要滿足MST一開始的假設，結果就唯一。
+   1. Kruskal
+      把所有 edge 的權重排序，從權重低的開始當作 MST 的成員。  
+      如果加入這個 edge 後會形成 cycle 則跳過，直到選中 v-1 個 edge。  
+      (如果跑完所有邊也行，但就多浪費時間，不影響結果。)  
+   2. Prim 0516-h3
 
 
 # 作業繳交網址:
