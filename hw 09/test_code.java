@@ -1,16 +1,34 @@
 import com.google.gson.Gson;
 import com.google.gson.JsonIOException;
 import com.google.gson.JsonSyntaxException;
+
+import edu.princeton.cs.algs4.Edge;
+import edu.princeton.cs.algs4.EdgeWeightedGraph;
+import edu.princeton.cs.algs4.MinPQ;
+import edu.princeton.cs.algs4.UF;
+
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.*;
 
 class OutputFormat {
+    // 設備類型總共有 4 種: Server, Router, Printer, Computer，透過查表知道每台設備是甚麼類型，例如:
+    // Map<Integer, String> deviceTypes = Map.of(
+    // 0, "Router",
+    // 1, "Server",
+    // 2, "Printer",
+    // 3, "Printer",
+    // 4, "Computer",
+    // 5, "Computer",
+    // 6, "Computer"
+    // );
     Map<Integer, String> deviceTypes;
-    List<int[]> links;
-    int cablingCost;
-    int serverToRouter;
-    int mostPopularPrinter;
+
+    // 紀錄兩個設備(兩個頂點)與連線的長度(邊的權重)
+    List<int[]> links; // {vertex1, vertex2, length}
+    int cablingCost; // 總電線長度
+    int serverToRouter; // 所有伺服器到路由器的電線總長
+    int mostPopularPrinter; // 連接最多Computer的印表機ID
 }
 
 class TestCase {
@@ -19,235 +37,261 @@ class TestCase {
     ArrayList<OutputFormat> data;
 }
 
+class KruskalMST {
+    private Queue<Edge> mst = new LinkedList<Edge>(); // 用於儲存 MST 的邊
+
+    public KruskalMST(EdgeWeightedGraph G) {
+        // 1. 將輸入圖的所有邊放入最小優先級佇列，會自己根據邊的權重排序
+        MinPQ<Edge> pq = new MinPQ<Edge>();
+        for (Edge e : G.edges()) {
+            pq.insert(e);
+        }
+        // 2. 初始化 Union-find
+        UF uf = new UF(G.V());
+
+        // 3. 貪心選擇邊 & 4. 終止條件
+        // 當優先級佇列不為空且 MST 的邊數未達到 V-1 時繼續循環
+        while (!pq.isEmpty() && mst.size() < G.V() - 1) {
+
+            // 取得最小邊與對應的兩個頂點
+            Edge e = pq.delMin(); // 取出當前權重最小的邊
+            int v = e.either(); // 獲取邊的一個頂點
+            int w = e.other(v); // 獲取邊的另一個頂點
+
+            // 如果兩個頂點屬於不同的Union才合併並且加入MST（避免環）
+            // 如果不滿足則跳過
+            if (uf.find(v) != uf.find(w)) {
+                uf.union(v, w); // 合併兩個Union
+                mst.add(e); // 將邊加入 MST
+            }
+        }
+    }
+
+    // 返回 MST 的所有邊
+    public Iterable<Edge> edges() {
+        return mst;
+    }
+}
+
 class InnovationStudioCabling {
-    private List<Edge> mstEdges;
-    private int cablingCost;
-    private int serverRouterLinkLength;
-    private int mostBusyPrinter;
 
-    public InnovationStudioCabling(Map<Integer, String> deviceTypes, List<int[]> links) {
-        buildMST(deviceTypes, links);
-        calculateCablingCost();
-        serverRouterLinkLength = findServerRouterLink(deviceTypes);
-        mostBusyPrinter = findMostBusyPrinter(deviceTypes);
-    }
+    // 紀錄輸入的種類表
+    private Map<Integer, String> deviceTypes; // 設備ID與對應種類表
+    // 記錄所有設備的最短接線方式(MST)
+    private KruskalMST mst;
+    // 將MST轉換為鄰接表
+    private Map<Integer, List<int[]>> adjacencyList = new HashMap<>();
+    // 紀錄所有printer與computers的idx
+    private Set<Integer> printers; // 所有印表機的索引集合
+    private Set<Integer> computers; // 所有學生電腦的索引集合
+    private int routerIndex; // 路由器的索引 只會有一個
+    private int serverIndex; // 伺服器的索引 只會有一個
 
-    // 使用Kruskal算法構建MST，修正設備索引壓縮順序
-    private void buildMST(Map<Integer, String> deviceTypes, List<int[]> links) {
-        Set<Integer> devices = deviceTypes.keySet();
-        List<Integer> deviceList = new ArrayList<>(devices);
-        Collections.sort(deviceList); // 確保設備索引排序，避免壓縮錯誤
-        int n = deviceList.size();
-        Map<Integer, Integer> originalToCompressed = new HashMap<>();
-        for (int i = 0; i < n; i++) {
-            originalToCompressed.put(deviceList.get(i), i);
-        }
+    // 構造函數
+    public InnovationStudioCabling(Map<Integer, String> deviceTypes, List<int[]> links) { // 設備ID與對應種類表, 設備的連接情況與權重
+        this.deviceTypes = new HashMap<>(deviceTypes);
+        this.printers = new HashSet<>();
+        this.computers = new HashSet<>();
 
-        List<Edge> edges = new ArrayList<>();
-        for (int[] link : links) {
-            int u = link[0];
-            int v = link[1];
-            int length = link[2];
-            edges.add(new Edge(u, v, length));
-        }
-        Collections.sort(edges);
-
-        UnionFind uf = new UnionFind(n);
-        mstEdges = new ArrayList<>();
-
-        for (Edge edge : edges) {
-            int uCompressed = originalToCompressed.get(edge.u);
-            int vCompressed = originalToCompressed.get(edge.v);
-            if (uf.find(uCompressed) != uf.find(vCompressed)) {
-                uf.union(uCompressed, vCompressed);
-                mstEdges.add(edge);
-                if (mstEdges.size() == n - 1)
-                    break;
-            }
-        }
-    }
-
-    // 計算總電纜長度
-    private void calculateCablingCost() {
-        cablingCost = 0;
-        for (Edge edge : mstEdges) {
-            cablingCost += edge.length;
-        }
-    }
-
-    // 查找服務器與路由器之間的直接連接長度
-    private int findServerRouterLink(Map<Integer, String> deviceTypes) {
-        int serverIndex = -1, routerIndex = -1;
+        // 識別各類設備
         for (Map.Entry<Integer, String> entry : deviceTypes.entrySet()) {
-            if ("Server".equals(entry.getValue()))
-                serverIndex = entry.getKey();
-            else if ("Router".equals(entry.getValue()))
-                routerIndex = entry.getKey();
-        }
-        if (serverIndex == -1 || routerIndex == -1)
-            return 0; // 處理未找到的情況
-
-        for (Edge edge : mstEdges) {
-            if ((edge.u == serverIndex && edge.v == routerIndex) ||
-                    (edge.v == serverIndex && edge.u == routerIndex)) {
-                return edge.length;
-            }
-        }
-        return 0;
-    }
-
-    // 查找最忙碌的打印機
-    private int findMostBusyPrinter(Map<Integer, String> deviceTypes) {
-        Set<Integer> devices = deviceTypes.keySet();
-        List<Integer> deviceList = new ArrayList<>(devices);
-        int n = deviceList.size();
-        Map<Integer, Integer> originalToCompressed = new HashMap<>();
-        for (int i = 0; i < n; i++) {
-            originalToCompressed.put(deviceList.get(i), i);
-        }
-
-        // 構建鄰接表
-        List<List<Edge>> adj = new ArrayList<>();
-        for (int i = 0; i < n; i++)
-            adj.add(new ArrayList<>());
-        for (Edge edge : mstEdges) {
-            int uCompressed = originalToCompressed.get(edge.u);
-            int vCompressed = originalToCompressed.get(edge.v);
-            adj.get(uCompressed).add(new Edge(uCompressed, vCompressed, edge.length));
-            adj.get(vCompressed).add(new Edge(vCompressed, uCompressed, edge.length));
-        }
-
-        // 收集打印機和計算機的壓縮索引
-        List<Integer> printersCompressed = new ArrayList<>();
-        List<Integer> originalPrinters = new ArrayList<>();
-        List<Integer> computersCompressed = new ArrayList<>();
-        for (Map.Entry<Integer, String> entry : deviceTypes.entrySet()) {
-            int original = entry.getKey();
+            int index = entry.getKey();
             String type = entry.getValue();
-            int compressed = originalToCompressed.get(original);
-            if ("Printer".equals(type)) {
-                printersCompressed.add(compressed);
-                originalPrinters.add(original);
-            } else if ("Computer".equals(type)) {
-                computersCompressed.add(compressed);
+            if (type.equals("Printer")) {
+                printers.add(index); // 加入印表機集合
+            } else if (type.equals("Computer")) {
+                computers.add(index); // 加入電腦集合
+            } else if (type.equals("Router")) {
+                routerIndex = index; // 記錄路由器索引
+            } else if (type.equals("Server")) {
+                serverIndex = index; // 記錄伺服器索引
             }
         }
 
-        // 預處理每個打印機到所有節點的距離
-        List<int[]> printerDistances = new ArrayList<>();
-        for (int p : printersCompressed) {
-            int[] dist = new int[n];
-            Arrays.fill(dist, -1);
-            dist[p] = 0;
-            Queue<Integer> queue = new LinkedList<>();
-            queue.offer(p);
-            while (!queue.isEmpty()) {
-                int current = queue.poll();
-                for (Edge e : adj.get(current)) {
-                    int neighbor = e.v;
-                    if (dist[neighbor] == -1) {
-                        dist[neighbor] = dist[current] + e.length;
-                        queue.offer(neighbor);
-                    }
-                }
-            }
-            printerDistances.add(dist);
+        // 建立邊權重圖
+        EdgeWeightedGraph G = new EdgeWeightedGraph(deviceTypes.size());
+        for (int[] link : links) { // 遍歷所有連接
+            int v = link[0]; // 第一個設備的索引
+            int w = link[1]; // 第二個設備的索引
+            int length = link[2]; // 連接的長度
+            G.addEdge(new Edge(v, w, length)); // 添加邊到圖中
         }
 
-        // 統計每個計算機的最近打印機
-        int[] printerCounts = new int[printersCompressed.size()];
-        for (int c : computersCompressed) {
-            int minDist = Integer.MAX_VALUE;
-            int selectedPrinterIdx = -1;
-            for (int pIdx = 0; pIdx < printersCompressed.size(); pIdx++) {
-                int dist = printerDistances.get(pIdx)[c];
-                if (dist < minDist) {
-                    minDist = dist;
-                    selectedPrinterIdx = pIdx;
-                } else if (dist == minDist) {
-                    int currentOriginal = originalPrinters.get(pIdx);
-                    int selectedOriginal = originalPrinters.get(selectedPrinterIdx);
-                    if (currentOriginal < selectedOriginal) {
-                        selectedPrinterIdx = pIdx;
-                    }
-                }
-            }
-            if (selectedPrinterIdx != -1) {
-                printerCounts[selectedPrinterIdx]++;
-            }
+        // 使用Kruskal演算法計算最小生成樹
+        this.mst = new KruskalMST(G);
+
+        // 根據MST構建鄰接表
+        adjacencyList = new HashMap<>();
+        for (Edge edge : mst.edges()) {
+            int v = edge.either();
+            int w = edge.other(v);
+            int weight = (int) edge.weight();
+
+            adjacencyList.computeIfAbsent(v, k -> new ArrayList<>()).add(new int[] { w, weight });
+            adjacencyList.computeIfAbsent(w, k -> new ArrayList<>()).add(new int[] { v, weight });
         }
 
-        // 找出最忙碌的打印機
-        int maxCount = -1, result = -1;
-        for (int i = 0; i < printerCounts.length; i++) {
-            int count = printerCounts[i];
-            int original = originalPrinters.get(i);
-            if (count > maxCount || (count == maxCount && original < result)) {
-                maxCount = count;
-                result = original;
-            }
-        }
-        return result;
     }
 
+    /**
+     * 計算總佈線長度
+     * 即MST中所有邊的權重總和
+     */
     public int cablingCost() {
-        return cablingCost;
+        int cost = 0;
+        for (Edge edge : mst.edges()) {
+            cost += (int) edge.weight();
+        }
+        return cost;
     }
 
+    /**
+     * 計算MST當中，伺服器到路由器的電線長度(只會各有一個)
+     */
     public int serverToRouter() {
-        return serverRouterLinkLength;
+        // BFS or DFS 尋找 serverIndex 到 routerIndex 的路徑長度
+        Set<Integer> visited = new HashSet<>();
+        return dfsServerToRouter(serverIndex, -1, routerIndex, 0, visited);
     }
 
+    /**
+     * 用 DFS 遞迴搜尋 MST 鄰接表，找出從 current（server）到 target（router）的唯一路徑長度。
+     * 
+     * @param current 目前所在節點（初始為 serverIndex）
+     * @param parent  來的上一個節點（防止回頭，初始為 -1）
+     * @param target  目標節點（routerIndex）
+     * @param accLen  目前累積的路徑長度（初始為 0）
+     * @param visited 已經拜訪過的節點集合（避免重複走訪）
+     * @return 如果找到路徑，回傳累積長度；找不到回傳 -1
+     */
+    private int dfsServerToRouter(int current, int parent, int target, int accLen, Set<Integer> visited) {
+        // 如果目前節點就是目標節點，代表已經找到 server 到 router 的路徑，回傳累積長度
+        if (current == target)
+            return accLen;
+
+        // 標記目前節點已拜訪，避免重複走訪
+        visited.add(current);
+
+        // 遍歷目前節點在 MST 鄰接表中的所有鄰居
+        for (int[] neighbor : adjacencyList.getOrDefault(current, Collections.emptyList())) {
+            int next = neighbor[0]; // 鄰居節點編號
+            int weight = neighbor[1]; // 這條邊的權重（電線長度）
+
+            // 如果鄰居是父節點，代表是回頭路，跳過
+            if (next == parent)
+                continue;
+
+            // 如果鄰居已經拜訪過，也跳過（避免環）
+            if (visited.contains(next))
+                continue;
+
+            // 遞迴往下一個鄰居走，累積長度
+            int res = dfsServerToRouter(next, current, target, accLen + weight, visited);
+
+            // 如果在這條路徑下有找到目標，直接回傳結果
+            if (res != -1)
+                return res;
+        }
+
+        // 所有鄰居都走過還是沒找到目標，回傳 -1
+        return -1;
+    }
+
+    /**
+     * 找出最忙碌的印表機
+     * 1. 以所有印表機為起點，對 MST 鄰接表執行多源 Dijkstra，
+     * 一次性計算每個節點到最近印表機的最短距離與是哪一台印表機（距離相同時選 index 較小者）。
+     * 2. 統計每台印表機服務的電腦數量。
+     * 3. 返回服務最多電腦的印表機索引（平手時返回較小索引）。
+     */
+    // 舉例: 假設有三台印表機（A、B、C），每台都同時出發，像水波一樣往外擴散。
+    // 每個節點只會被最短距離、index 較小的印表機「染色」一次。
     public int mostPopularPrinter() {
-        return mostBusyPrinter;
-    }
+        // 如果沒有印表機，直接回傳 -1
+        if (printers.isEmpty())
+            return -1;
+        // 如果沒有電腦，回傳 index 最小的印表機
+        if (computers.isEmpty())
+            return printers.stream().min(Integer::compare).orElse(-1);
 
-    // 邊的數據結構
-    static class Edge implements Comparable<Edge> {
-        int u, v, length;
+        // 初始化變數
+        Map<Integer, Integer> nearestPrinter = new HashMap<>(); // 記錄每個節點最近的印表機 index
+        Map<Integer, Integer> minDist = new HashMap<>(); // 記錄每個節點到最近印表機的距離
 
-        Edge(int u, int v, int length) {
-            this.u = u;
-            this.v = v;
-            this.length = length;
+        // 初始化pq用來記錄待擴散的過程
+        // a[0]=目前節點的編號（node）, a[1]=目前節點到起始印表機的累積距離（dist）, a[2]=這條路徑所屬的印表機
+        // index（printer
+        // index）
+        // 根據距離排序，距離相同時印表機 index 較小的優先
+        PriorityQueue<int[]> pq = new PriorityQueue<>(
+                (a, b) -> a[1] != b[1] ? Integer.compare(a[1], b[1]) : Integer.compare(a[2], b[2]));
+
+        // 初始化所有節點的距離為無限大
+        for (int node : deviceTypes.keySet()) { // Map.keySet() 獲取所有設備的索引
+            minDist.put(node, Integer.MAX_VALUE);
+        }
+        // 將所有印表機作為起點加入優先隊列，距離設為0
+        for (int printer : printers) {
+            pq.offer(new int[] { printer, 0, printer }); // 目前節點, 距離, 屬於哪條印表機的擴散
+            minDist.put(printer, 0); // 印表機到自己的距離是0
+            nearestPrinter.put(printer, printer); // 印表機到自己的最近印表機是自己
         }
 
-        @Override
-        public int compareTo(Edge o) {
-            return Integer.compare(length, o.length);
-        }
-    }
-
-    // 並查集實現
-    static class UnionFind {
-        int[] parent, rank;
-
-        UnionFind(int n) {
-            parent = new int[n];
-            rank = new int[n];
-            for (int i = 0; i < n; i++)
-                parent[i] = i;
-        }
-
-        int find(int x) {
-            if (parent[x] != x)
-                parent[x] = find(parent[x]);
-            return parent[x];
-        }
-
-        void union(int x, int y) {
-            int xRoot = find(x), yRoot = find(y);
-            if (xRoot == yRoot)
-                return;
-            if (rank[xRoot] < rank[yRoot])
-                parent[xRoot] = yRoot;
-            else {
-                parent[yRoot] = xRoot;
-                if (rank[xRoot] == rank[yRoot])
-                    rank[xRoot]++;
+        // 多源 Dijkstra 主迴圈 (同時用多個起點的 Dijkstra)
+        while (!pq.isEmpty()) {
+            int[] cur = pq.poll();
+            int node = cur[0], dist = cur[1], printerIdx = cur[2];
+            // 如果目前距離比已知最短距離還大，跳過
+            if (dist > minDist.get(node))
+                continue;
+            // 如果距離一樣但印表機 index 較大，也跳過（確保 index 較小的優先）
+            if (dist == minDist.get(node) && printerIdx > nearestPrinter.get(node))
+                continue;
+            // 更新目前節點最近的印表機
+            nearestPrinter.put(node, printerIdx);
+            // 遍歷所有鄰居，嘗試更新鄰居的最短距離與最近印表機
+            for (int[] neighbor : adjacencyList.getOrDefault(node, Collections.emptyList())) {
+                int next = neighbor[0], weight = neighbor[1];
+                int newDist = dist + weight;
+                // 如果新距離更短，或距離一樣但印表機 index 較小，則更新
+                if (newDist < minDist.get(next) || (newDist == minDist.get(next)
+                        && printerIdx < nearestPrinter.getOrDefault(next, Integer.MAX_VALUE))) {
+                    minDist.put(next, newDist);
+                    nearestPrinter.put(next, printerIdx);
+                    pq.offer(new int[] { next, newDist, printerIdx });
+                }
             }
         }
+
+        // 統計每台印表機服務的電腦數量
+        Map<Integer, Integer> printerCounts = new HashMap<>();
+        for (int computer : computers) {
+            int p = nearestPrinter.get(computer); // 這台電腦最近的印表機
+            printerCounts.put(p, printerCounts.getOrDefault(p, 0) + 1);
+        }
+
+        // 找出服務最多電腦的印表機（平手時選 index 較小者）
+        return printerCounts.entrySet().stream() // entrySet() 取得整個Map的集合, stream() 轉為流才能用後面的幾種method。
+                // 先依照服務電腦數量由大到小排序，若數量相同則印表機 index 較小的排前面
+                .sorted((a, b) -> { // -> 是 lambda 表達式，用於把{}的內容傳給sotred()的比較器。
+                    if (b.getValue().equals(a.getValue())) { // 如果兩個印表機服務的電腦數量相同
+                        // 返回 index 較小的印表機
+                        return a.getKey().compareTo(b.getKey()); // getKey() 取得印表機 index
+                    }
+                    // 如果印表機服務的電腦數量不同，返回服務比較多台電腦的印表機。
+                    return b.getValue().compareTo(a.getValue());
+                })
+                // 取排序後的第一個（最多電腦的印表機）
+                .findFirst()
+                // 只取印表機 index
+                .map(Map.Entry::getKey)
+                // 如果沒有任何印表機服務電腦，則回傳 index 最小的印表機（題目規定）
+                .orElse(printers.stream().min(Integer::compare).orElse(-1));
     }
+
+}
+
+class test_InnovationStudioCabling {
 
     public static void main(String[] args) {
         Gson gson = new Gson();
