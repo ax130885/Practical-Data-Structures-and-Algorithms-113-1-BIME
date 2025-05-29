@@ -18,7 +18,7 @@ hw07(質心分群 centroid hierarchical clustering algorithm): https://hackmd.io
 Supplementary 07_1: 實作 紅黑樹 KD樹  
 hw08(2D interval search): https://hackmd.io/@CiqLOooyRwWmK--mMkfetA/HkoBID501g  
 hw09(Kruskal 圖的最小生成樹): https://hackmd.io/@CiqLOooyRwWmK--mMkfetA/SyROxKmlgg  
-hw10: https://hackmd.io/@CiqLOooyRwWmK--mMkfetA/rk3VZYXllg
+hw10(最短路徑-A*曼哈頓距離估價): https://hackmd.io/@CiqLOooyRwWmK--mMkfetA/rk3VZYXllg
 
 # 作業繳交網址:
 https://c4lab.bime.ntu.edu.tw:13000/
