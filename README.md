@@ -16,7 +16,7 @@ Supplementary 05_3: 實作 Heap Sort.
 hw06(Event Queue): https://hackmd.io/@CiqLOooyRwWmK--mMkfetA/r1jOYE2iye  
 hw07(質心分群 centroid hierarchical clustering algorithm): https://hackmd.io/@CiqLOooyRwWmK--mMkfetA/HkHS8UcC1x  
 Supplementary 07_1: 實作 紅黑樹 KD樹  
-hw08(2D interval search): https://hackmd.io/@CiqLOooyRwWmK--mMkfetA/HkoBID501g  
+hw08(2D interval search-矩形掃描線(rectangle sweep line)): https://hackmd.io/@CiqLOooyRwWmK--mMkfetA/HkoBID501g  
 hw09(Kruskal 圖的最小生成樹): https://hackmd.io/@CiqLOooyRwWmK--mMkfetA/SyROxKmlgg  
 hw10(最短路徑-A*曼哈頓距離估價): https://hackmd.io/@CiqLOooyRwWmK--mMkfetA/rk3VZYXllg
 

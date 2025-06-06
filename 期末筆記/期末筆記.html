@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>Tree&#x3001;Symbol Table</title>
+            <style>
+/* From extension vscode.github */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.vscode-dark img[src$=\#gh-light-mode-only],
+.vscode-light img[src$=\#gh-dark-mode-only],
+.vscode-high-contrast:not(.vscode-high-contrast-light) img[src$=\#gh-light-mode-only],
+.vscode-high-contrast-light img[src$=\#gh-dark-mode-only] {
+	display: none;
+}
+
+/* From extension marp-team.marp-vscode */
+#__marp-vscode {
+  all: revert;
+}
+
+/* Override VS Code default CSS rules reverting to initial
+   https://github.com/microsoft/vscode/blob/master/src/vs/workbench/contrib/webview/browser/pre/main.js#L53 */
+body.marp-vscode {
+  padding: 0;
+}
+
+body.marp-vscode img {
+  max-width: unset;
+  max-height: unset;
+}
+
+body.marp-vscode a,
+body.marp-vscode a:hover,
+body.marp-vscode code {
+  color: unset;
+}
+
+body.marp-vscode blockquote {
+  background: unset;
+  border-color: unset;
+}
+
+@media screen {
+  body.marp-vscode {
+    overflow-y: scroll;
+
+    /* stylelint-disable-next-line selector-class-pattern */
+    &.showEditorSelection {
+      --marp-vscode-highlight-color: rgb(255 255 255 / 40%);
+
+      &.vscode-light {
+        --marp-vscode-highlight-color: rgb(0 0 0 / 15%);
+      }
+
+      &.vscode-high-contrast {
+        --marp-vscode-highlight-color: rgb(255 160 0 / 70%);
+      }
+    }
+  }
+
+  #__marp-vscode [data-marp-vscode-slide-wrapper] {
+    margin: 20px;
+    position: relative;
+
+    &.code-active-line,
+    &:has(.code-active-line) {
+      &::before {
+        position: absolute;
+        content: '';
+        inset: -7px;
+        border: 3px solid var(--marp-vscode-highlight-color, transparent);
+        pointer-events: none;
+      }
+    }
+  }
+
+  #__marp-vscode svg[data-marpit-svg] {
+    box-shadow: 0 5px 10px rgb(0 0 0 / 25%);
+    display: block;
+    margin: 0;
+  }
+
+  /* Based on https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+  #code-csp-warning {
+    background-color: #444;
+    box-shadow: 1px 1px 1px rgb(0 0 0 / 25%);
+    color: white;
+    cursor: pointer;
+    font-family: sans-serif;
+    font-size: 12px;
+    line-height: 22px;
+    margin: 16px;
+    padding: 6px;
+    position: fixed;
+    right: 0;
+    text-align: center;
+    top: 0;
+    word-wrap: break-word;
+  }
+
+  #code-csp-warning:hover {
+    text-decoration: none;
+    background-color: #007acc;
+    box-shadow: 2px 2px 2px rgb(0 0 0 / 25%);
+  }
+}
+
+@media print {
+  body.marp-vscode #code-csp-warning {
+    display: none;
+  }
+}
+
+</style>
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css">
+<link href="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.css" rel="stylesheet" type="text/css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item {
+    list-style-type: none;
+}
+
+.task-list-item-checkbox {
+    margin-left: -20px;
+    vertical-align: middle;
+    pointer-events: none;
+}
+</style>
+<style>
+:root {
+  --color-note: #0969da;
+  --color-tip: #1a7f37;
+  --color-warning: #9a6700;
+  --color-severe: #bc4c00;
+  --color-caution: #d1242f;
+  --color-important: #8250df;
+}
+
+</style>
+<style>
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-note: #2f81f7;
+    --color-tip: #3fb950;
+    --color-warning: #d29922;
+    --color-severe: #db6d28;
+    --color-caution: #f85149;
+    --color-important: #a371f7;
+  }
+}
+
+</style>
+<style>
+.markdown-alert {
+  padding: 0.5rem 1rem;
+  margin-bottom: 16px;
+  color: inherit;
+  border-left: .25em solid #888;
+}
+
+.markdown-alert>:first-child {
+  margin-top: 0
+}
+
+.markdown-alert>:last-child {
+  margin-bottom: 0
+}
+
+.markdown-alert .markdown-alert-title {
+  display: flex;
+  font-weight: 500;
+  align-items: center;
+  line-height: 1
+}
+
+.markdown-alert .markdown-alert-title .octicon {
+  margin-right: 0.5rem;
+  display: inline-block;
+  overflow: visible !important;
+  vertical-align: text-bottom;
+  fill: currentColor;
+}
+
+.markdown-alert.markdown-alert-note {
+  border-left-color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-note .markdown-alert-title {
+  color: var(--color-note);
+}
+
+.markdown-alert.markdown-alert-important {
+  border-left-color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-important .markdown-alert-title {
+  color: var(--color-important);
+}
+
+.markdown-alert.markdown-alert-warning {
+  border-left-color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-warning .markdown-alert-title {
+  color: var(--color-warning);
+}
+
+.markdown-alert.markdown-alert-tip {
+  border-left-color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-tip .markdown-alert-title {
+  color: var(--color-tip);
+}
+
+.markdown-alert.markdown-alert-caution {
+  border-left-color: var(--color-caution);
+}
+
+.markdown-alert.markdown-alert-caution .markdown-alert-title {
+  color: var(--color-caution);
+}
+
+</style>
+        
+        </head>
+        <body class="vscode-body vscode-light">
+            <h1 id="treesymbol-table">Tree、Symbol Table</h1>
+<p>考慮用哪種 sort 應該要考慮</p>
+<ol>
+<li>穩定性:在遇到相同大小時不能交換，並且不可破壞上次排序的結果。通常只要不是鄰近兩兩交換的，都不穩定。(只有merge, insert sort是穩定)</li>
+<li>確定性:有一致的執行過程。快速排序因為一開始會洗牌，所以沒有確定性。</li>
+<li>平行度:快速排序無法平行化</li>
+<li>空間花費:merge sort需要額外空間保存分治過程，無法直接交換。<br>
+<img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image.png" alt="各種sort的複雜度"></li>
+</ol>
+<p>Symbol Table 實作方法: Binary Search Tree</p>
+<ol>
+<li>
+<p>linklist</p>
+</li>
+<li>
+<p>雙陣列分別儲存 key, value。 放入時要排序，可以使用 binary search。</p>
+</li>
+<li>
+<p>Hibbard Deletion</p>
+<pre><code>     10
+    /  \
+   5    20
+       /  \
+     15    30
+</code></pre>
+<ul>
+<li>case1. 刪除節點在最下面: 把 parent 的 link 設為 nullptr</li>
+<li>case2. 刪除節點的兩根腳只有一個有連接(另一個為空): 直接把 parent 的 link 連接到子節點</li>
+<li>case3. 刪除節點的兩根腳都有值: 選擇右子樹的最小(往右走一步後往左走到底)，來取代要被刪除的位置。
+<ol>
+<li>假設要刪除 10，並且用 15 來取代。</li>
+<li>暫存要刪除節點(10)：Node t = x;</li>
+<li>找到並且暫存右子樹的最小節點(15)：x = min(t.right);</li>
+<li>將要取代的暫存節點(15)的右子樹設為，欲刪除節點(10)的右子樹，並且刪除原本的要取代節點(15)：x.right = deleteMin(t.right); 這裡的deleteMin會遞迴找到這個子樹當中最左邊(最小)的節點來刪除。</li>
+<li>最後原本欲刪除的節點，因為沒有人指向他，在java當中，會自己被回收。</li>
+</ol>
+</li>
+<li>注意：Hibbard 刪除可能導致樹不平衡（刪除後樹高增加），實際應用中需謹慎使用。
+【Hibbard Deletion 程式實作】
+<img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-27.png" alt="Hibbard Deletion 程式實作"></li>
+</ul>
+</li>
+<li>
+<p>遍歷二元樹的方法 preorder, inorder, postorder (<a href="https://www.shubo.io/iterative-binary-tree-traversal/">https://www.shubo.io/iterative-binary-tree-traversal/</a>)</p>
+</li>
+<li>
+<p>紅黑樹: <a href="https://www.bilibili.com/video/BV1piF6erE7Y?spm_id_from=333.788.videopod.sections&amp;vd_source=a7ec40e3a00a70629191f9c178661833">https://www.bilibili.com/video/BV1piF6erE7Y?spm_id_from=333.788.videopod.sections&amp;vd_source=a7ec40e3a00a70629191f9c178661833</a></p>
+</li>
+</ol>
+<h1 id="幾何搜尋">幾何搜尋</h1>
+<ol>
+<li>KD-tree: 應用於 range search &amp; nearest neighbor (113-2-PDSA-20250502-h2)</li>
+<li>區間搜尋 interval search tree (113-2-PDSA-20250502-h2)
+<img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-1.png" alt="alt text"></li>
+<li>分群
+<ol>
+<li>
+<p>階層式分群 hierarchical clustering</p>
+<ol>
+<li>群的距離定義有三種
+<ol>
+<li>average linkage (也稱為 centroid): 比較兩群質心的距離</li>
+<li>single linkage: 比較兩群最近的距離 (實作等價於 kruskal MST)</li>
+<li>complete linkage: 比較兩群最遠的的距離</li>
+</ol>
+</li>
+<li>用 centroid 舉例。每個點先各自成為一個群（cluster）
+<ul>
+<li>一開始，每個座標都是一個獨立的群，質心就是自己。</li>
+</ul>
+</li>
+<li>重複合併最近的兩個群
+<ul>
+<li>每一輪都找出目前所有還活著的群中，距離最近的兩個群（這裡用的是質心的平方距離，不用開根號，效率較高）。</li>
+<li>合併這兩個群，產生一個新的群，新群的質心是兩個舊群質心的加權平均（依照各自點數加權）。</li>
+<li>被合併的兩個群標記為「死亡」（alive = false），新群加入到群列表。</li>
+</ul>
+</li>
+<li>直到群數等於目標數量
+不斷重複合併，直到剩下的群數等於targetClusterCount。</li>
+<li>輸出所有活著的群的質心，並排序
+把所有還活著的群的質心座標收集起來，依照 x、y 排序後輸出。</li>
+</ol>
+</li>
+<li>
+<p>圖當中的連通分量(CC)，也是一種分群。</p>
+</li>
+<li>
+<p>機器學習當中的非監督式學習，也是一種分群。</p>
+</li>
+</ol>
+</li>
+</ol>
+<h1 id="圖">圖</h1>
+<ol>
+<li>
+<p>無向圖
+<img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-3.png" alt="鄰接表概念"> <strong>鄰接表概念</strong>
+<img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-2.png" alt="鄰接表實作"> <strong>鄰接表實作</strong></p>
+<p>其中Bag是一種 linklist 代表裡面存放的資料 1.無序, 2.可重複<br>
+例如可以重複執行兩次 adj[v].add(w)，這代表V和W之間有兩條路徑。<br>
+<code>(Bag&lt;Edge&gt;[]) new Bag[V];</code>代表建立V個Bag(linklist)的容器(尚未建立實例)，前面的()代表讓編譯器檢查，linklist內只能存入Edge。但如果用特殊方法繞開編譯器，讓執行時存不同東西到Bag內，根本不會檢查。
+<code>new Bag&lt;Edge&gt;()</code>建立Bag的實例。並且實際限制每個Bag的add方法，只能加入Edge。</p>
+<p><img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-6.png" alt="DFS概念"> <strong>DFS概念</strong>
+<img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-4.png" alt="DFS實作"> <strong>DFS實作</strong>
+<img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-7.png" alt="BFS概念"> <strong>BFS概念</strong>
+<img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-5.png" alt="BFS實作"> <strong>BFS實作</strong> <!-- 迴圈內比一開始初始化多了edgeTo[w]=v，還有distTo[w]邏輯不同 -->
+<img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-10.png" alt="連通分量(CC)概念"> 連通分量(CC)概念
+<img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-8.png" alt="連通分量(CC)實作1"> <strong>連通分量(CC)</strong></p>
+<p><code>marked [v]</code>紀錄每個頂點有無被搜尋過，<br>
+<code>id [v]</code>紀錄每個頂點所屬的CC編號，<br>
+<code>count</code>總共有幾組CC。<br>
+構造函數遍歷每個頂點，如果還沒掃過，就用dfs掃所有連通的點，並且設定同樣的CC編號(id)，最後count+1。</p>
+<p><img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-9.png" alt="連通分量(CC)實作2"> <strong>連通分量(CC)實作2</strong><br>
+<img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-11.png" alt="難度"> <strong>難度</strong> <!-- 4.biconnected compoment指的是，有沒有點移除以後會導致CC失效的。 --></p>
+<!-- 6. 尤拉路徑: 一筆畫，每個邊只能經過一次(簡單)。 -->
+<!-- 7. 漢米爾頓路徑: 一筆畫，每個頂點只能經過一次(超難)。 -->
+<!-- 8. Bipartite graph (二分圖): 所有頂點分為兩群(紅、白)，所有紅點只能連到白點，所有白點只能連到紅點。-->
+<!-- 9. planarity 畫出平面圖，沒有邊交叉(重疊)。 -->
+<!-- 10. 在交換元素後，問兩張圖是不是一樣。 -->
+</li>
+<li>
+<p>有向圖 Digraph</p>
+<ol>
+<li>
+<p>拓樸排序 Directed acyclic graph, (DAG, 有向無環圖) 113-2-PDSA-20250516-h1 25 min</p>
+<ul>
+<li>
+<p>【DAG概念】
+<img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-29.png" alt="DAG概念"></p>
+<ul>
+<li>遍歷順序: 從0出發做DFS，<code>.</code>代表是相同起點，但是已經走到底，<code>,</code>代表是不同的起點，最後順序為(014.52,36)</li>
+<li>postorder: stack釋放時才將節點加入，得到 (4125063)</li>
+<li>topological order: 直接把postorder反過來。得到 (3605214)</li>
+</ul>
+</li>
+<li>
+<p>【DAG性質】
+結果不唯一<br>
+DAG 一定沒有迴圈</p>
+</li>
+<li>
+<p>【DAG程式實作】<br>
+<img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-28.png" alt="alt text">
+使用 DFS 的程式，只要注意白色的部份，加上 stack 紀錄結果。</p>
+</li>
+</ul>
+</li>
+<li>
+<p>強連通分量 strong components
+【概念】
+<img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-49.png" alt="強連通分量 概念">
+類似一般的CC(連通分量)，但是在有向圖當中，可能每個點的連接，來回是不同路徑。<br>
+將圖分成強連通分量以後，可以找到以強連通分量為單位的DAG。</p>
+<p>【Kosaraju-Sharir 概念】
+<img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-46.png" alt="範例輸入"> <strong>範例輸入</strong><br>
+<img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-50.png" alt="將所有邊都反向以後，做一次dfs"> <strong>將所有邊都反向以後，做一次dfs</strong><br>
+<img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-51.png" alt="按照剛剛結果的順序，在原本沒有反向的圖上，再做一次dfs"> <strong>按照剛剛結果的順序，在原本沒有反向的圖上，再做一次dfs</strong><br>
+正反向各做一次，相當於確保CC內的每個邊，從兩個方向都有路徑可走。</p>
+<p>【Kosaraju-Sharir 實作】
+<img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-47.png" alt="連通分量(無向) 實作"> <strong>連通分量(無向) 實作</strong>
+<img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-48.png" alt="強連通分量(有向) 實作"> <strong>強連通分量(有向) 實作</strong></p>
+</li>
+</ol>
+</li>
+<li>
+<p>Minumum Spanning Tree, (MST) 最小生成樹 (假設圖都連接、每個邊的權重都不同，這樣結果必定唯一。)
+原本的圖可能會有多個冗餘的邊，如何用最少的邊，把圖中的所有頂點連起來。<br>
+其中生成樹的所有邊必須相連(不能是兩個斷開的子圖)，必定沒有迴圈。</p>
+</li>
+<li>
+<p>圖的 cut property (必考):</p>
+<ul>
+<li>
+<p>【性質定義】
+任意切一刀，把圖中的點分為兩群，刀子經過的邊為 crossing edge。<br>
+該圖的MST路徑，必定包含所有 crossing edge 當中，權重最小的 crossing edge。</p>
+</li>
+<li>
+<p>【證明-反證法】(必考):
+假設我們的最小生成樹（MST）沒有包含這條權重最小的 crossing edge（記為 e），
+那麼 MST 必定包含其他 crossing edge（記為 f），因為要連接兩邊的點，所以必定會使用到 crossing edge。
+因為 e 的權重比 f 小（e 是所有 crossing edge 中最小的），
+如果我們把 MST 中的 f 換成 e，新的樹會比原本的 MST 權重更小。
+這代表使用 f 的 MST 違反了「最小」的定義。
+因此，假設不成立，所有 crossing edge 中權重最小的那一條，一定會在 MST 當中。
+<img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-12.png" alt="cut property"></p>
+</li>
+</ul>
+</li>
+<li>
+<p>weighted edge graph 權重邊圖
+之前原本是用vertex(頂點)來建構圖，因為待會MST引入邊的權重，所以改成用edge(邊)來建構圖。
+<img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-14.png" alt="權重邊的實作"> <strong>權重邊的實作</strong>
+<img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-13.png" alt="權重邊圖的架構"> <strong>權重邊圖的架構</strong>
+<img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-15.png" alt="權重邊圖的鄰接表"> <strong>權重邊圖的鄰接表(頂點1, 頂點2, 權重)</strong>
+<img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-16.png" alt="權重邊圖鄰接表的實作"> <strong>權重邊圖鄰接表的實作</strong></p>
+</li>
+<li>
+<p>貪心 MST 算法:
+每次切一刀後，得到 minumum crossing edge 的兩個點。<br>
+在以後切的時候，都必須在同一邊，不能被切開。<br>
+重複切 v-1 次，即可得到 MST。
+不管怎麼切，只要滿足MST一開始的假設，結果就唯一。</p>
+<ol>
+<li>
+<p>Kruskal
+<img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-20.png" alt="alt text"></p>
+<ul>
+<li>
+<p>【算法說明】</p>
+<ol>
+<li><strong>排序所有邊</strong>：將所有邊按權重從小到大排序。</li>
+<li><strong>初始化 Union-find</strong>：每個頂點初始時屬於自己的獨立集合（即父節點指向自己）。</li>
+<li><strong>貪心選擇邊</strong>：檢查每條邊的兩個頂點 (u, v) 是否屬於同一集合，使用 Union-Find 判斷根結點是否相同。
+<ol>
+<li><strong>若屬於不同集合</strong>（即 find(u) != find(v)）：將這條邊加入 MST，並且用 Union 操作合併 u 和 v 所屬的集合。(這代表這條邊不會形成cycle，並且邊的兩個點，在以後切的時候，都必須在同一邊，不能被切開。)</li>
+<li><strong>若屬於同一集合</strong>（即 find(u) == find(v)）：跳過這條邊（加入它會形成環）。</li>
+</ol>
+</li>
+<li><strong>終止條件</strong>：當已選中 V−1 條邊時停止（V 為頂點數）。(如果跑完所有邊也行，但就多浪費時間，不影響結果。)</li>
+</ol>
+</li>
+<li>
+<p>【程式實作】
+<img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-17.png" alt="kruskal MST 實作"> <strong>kruskal MST 實作</strong></p>
+<pre><code class="language-java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">KruskalMST</span> {
+   <span class="hljs-keyword">private</span> Queue&lt;Edge&gt; mst = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Queue</span>&lt;Edge&gt;();  <span class="hljs-comment">// 用於儲存 MST 的邊</span>
+
+   <span class="hljs-keyword">public</span> <span class="hljs-title function_">KruskalMST</span><span class="hljs-params">(EdgeWeightedGraph G)</span> {
+      <span class="hljs-comment">// 1. 排序所有邊</span>
+      MinPQ&lt;Edge&gt; pq = <span class="hljs-keyword">new</span> <span class="hljs-title class_">MinPQ</span>&lt;Edge&gt;(G.edges());
+      <span class="hljs-comment">// 2. 初始化 Union-find</span>
+      <span class="hljs-type">UF</span> <span class="hljs-variable">uf</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">UF</span>(G.V());
+
+      <span class="hljs-comment">// 3. 貪心選擇邊 &amp; 4. 終止條件</span>
+      <span class="hljs-comment">// 當優先級佇列不為空且 MST 的邊數未達到 V-1 時繼續循環</span>
+      <span class="hljs-keyword">while</span> (!pq.isEmpty() &amp;&amp; mst.size() &lt; G.V() - <span class="hljs-number">1</span>) {
+
+            <span class="hljs-comment">// 取得最小邊與對應的兩個頂點</span>
+            <span class="hljs-type">Edge</span> <span class="hljs-variable">e</span> <span class="hljs-operator">=</span> pq.delMin();  <span class="hljs-comment">// 取出當前權重最小的邊</span>
+            <span class="hljs-type">int</span> <span class="hljs-variable">v</span> <span class="hljs-operator">=</span> e.either();    <span class="hljs-comment">// 獲取邊的一個頂點</span>
+            <span class="hljs-type">int</span> <span class="hljs-variable">w</span> <span class="hljs-operator">=</span> e.other(v);    <span class="hljs-comment">// 獲取邊的另一個頂點</span>
+
+            <span class="hljs-comment">// 如果兩個頂點屬於不同的Union才合併並且加入MST（避免環）</span>
+            <span class="hljs-comment">// 如果不滿足則跳過</span>
+            <span class="hljs-keyword">if</span> (!uf.connected(v, w)) {
+               uf.union(v, w);    <span class="hljs-comment">// 合併兩個Union</span>
+               mst.enqueue(e);    <span class="hljs-comment">// 將邊加入 MST</span>
+            }
+      }
+   }
+
+   <span class="hljs-comment">// 返回 MST 的所有邊</span>
+   <span class="hljs-keyword">public</span> Iterable&lt;Edge&gt; <span class="hljs-title function_">edges</span><span class="hljs-params">()</span> {
+      <span class="hljs-keyword">return</span> mst;
+   }
+}
+</code></pre>
+</li>
+</ul>
+</li>
+<li>
+<p>Prim<br>
+從一個頂點開始，逐步擴張MST的邊界，每次從MST鄰近的邊中選擇權重最小的。<br>
+<img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-18.png" alt="Lazy Prim 概念1">
+<img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-19.png" alt="Lazy Prim 概念2">
+<strong>Lazy Prim 概念</strong></p>
+<ul>
+<li>
+<p>【Lazy Prim 懶惰算法說明】把edge放到優先佇列<br>
+使用優先級佇列（最小堆）儲存所有邊，可能包含無效邊（已加入MST的頂點）。</p>
+<ol>
+<li><strong>初始化</strong>：選擇任意起點為MST，將其鄰接邊加入優先級佇列。</li>
+<li><strong>擴張樹</strong>：
+<ul>
+<li>從優先級佇列中取出最小權重邊<code>(u, v)</code>，其中u是本來就在MST當中的點，v可能在MST中也可能不在。</li>
+<li>若<code>v</code>不在MST當中，將<code>(u, v)</code>加入MST，並將<code>v</code>的鄰接邊加入佇列</li>
+<li>若<code>v</code>已經在MST當中(兩個點都已經在MST當中)，跳過（此為無效邊）</li>
+</ul>
+</li>
+<li><strong>終止條件</strong>：當MST包含<code>V−1</code>條邊時停止</li>
+</ol>
+</li>
+<li>
+<p>【Lazy Prim 實作】</p>
+<pre><code class="language-java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">LazyPrimMST</span> {
+   <span class="hljs-keyword">private</span> <span class="hljs-type">boolean</span>[] marked; <span class="hljs-comment">// 標記頂點是否已在MST中  </span>
+   <span class="hljs-keyword">private</span> Queue&lt;Edge&gt; mst;  <span class="hljs-comment">// 用於存儲MST的邊  </span>
+   <span class="hljs-keyword">private</span> MinPQ&lt;Edge&gt; pq;   <span class="hljs-comment">// 優先級隊列（最小堆），用於獲取最小權重邊</span>
+
+   <span class="hljs-keyword">public</span> <span class="hljs-title function_">LazyPrimMST</span><span class="hljs-params">(WeightedGraph G)</span> {
+      pq = <span class="hljs-keyword">new</span> <span class="hljs-title class_">MinPQ</span>&lt;Edge&gt;();  <span class="hljs-comment">// 初始化優先級隊列</span>
+      mst = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Queue</span>&lt;Edge&gt;(); <span class="hljs-comment">// 初始化MST邊集合</span>
+      marked = <span class="hljs-keyword">new</span> <span class="hljs-title class_">boolean</span>[G.V()]; <span class="hljs-comment">// 初始化標記數組</span>
+      visit(G, <span class="hljs-number">0</span>); <span class="hljs-comment">// 從頂點0開始構建MST（可選任意頂點）</span>
+
+      <span class="hljs-comment">// 當優先級隊列不為空且MST邊數未達到V-1時繼續循環</span>
+      <span class="hljs-keyword">while</span> (!pq.isEmpty() &amp;&amp; mst.size() &lt; G.V() - <span class="hljs-number">1</span>) {
+            <span class="hljs-type">Edge</span> <span class="hljs-variable">e</span> <span class="hljs-operator">=</span> pq.delMin(); <span class="hljs-comment">// 取出當前最小權重邊</span>
+            <span class="hljs-type">int</span> <span class="hljs-variable">v</span> <span class="hljs-operator">=</span> e.either(), w = e.other(v); <span class="hljs-comment">// 獲取邊的兩個頂點</span>
+            
+            <span class="hljs-comment">// 如果兩個頂點都已標記，則跳過（避免環）</span>
+            <span class="hljs-keyword">if</span> (marked[v] &amp;&amp; marked[w]) <span class="hljs-keyword">continue</span>;
+            
+            mst.enqueue(e); <span class="hljs-comment">// 將有效邊加入MST</span>
+            
+            <span class="hljs-comment">// 將未訪問的頂點加入樹，並訪問其鄰接邊</span>
+            <span class="hljs-keyword">if</span> (!marked[v]) visit(G, v);
+            <span class="hljs-keyword">if</span> (!marked[w]) visit(G, w);
+      }
+   }
+
+   <span class="hljs-comment">// 從頂點v開始構建MST</span>
+   <span class="hljs-comment">// 將v標記為已訪問，並將其鄰接邊加入優先級隊列</span>
+   <span class="hljs-keyword">private</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">visit</span><span class="hljs-params">(WeightedGraph G, <span class="hljs-type">int</span> v)</span> {
+      marked[v] = <span class="hljs-literal">true</span>; <span class="hljs-comment">// 標記頂點v已訪問</span>
+      <span class="hljs-keyword">for</span> (Edge e : G.adj(v)) { <span class="hljs-comment">// 遍歷v的所有鄰接邊</span>
+            <span class="hljs-comment">// 只將連接未訪問頂點的邊加入隊列（避免重複處理）</span>
+            <span class="hljs-keyword">if</span> (!marked[e.other(v)]) {
+               pq.insert(e);
+            }
+      }
+   }
+
+   <span class="hljs-comment">// 返回MST的所有邊</span>
+   <span class="hljs-keyword">public</span> Iterable&lt;Edge&gt; <span class="hljs-title function_">edges</span><span class="hljs-params">()</span> { 
+      <span class="hljs-keyword">return</span> mst; 
+   }
+}
+</code></pre>
+</li>
+<li>
+<p>【Eager Prim 積極算法說明】把vertex放到優先佇列<br>
+使用最小優先級佇列維護每個非樹頂點到樹的最小權重邊。</p>
+<ul>
+<li>相對於lazy的優點:不會包含無效邊，並且queue長度使用V(頂點)會比E(邊)更短。</li>
+<li>相對於lazy的缺點:實作較難，需要額外更新優先級佇列當中的權重(優先級)。<br>
+<img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-21.png" alt="Eager Prim 概念1"><br>
+<img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-22.png" alt="Eager Prim 概念2">
+第一次執行，MST當中只有0。鄰接點只有(4,7,2,6)<br>
+第二次執行MST當中有0, 7，此時鄰接點變為(4,5,1,3,2,6)，從MST到4的權重需要更新(0.38 -&gt; 0.37)。</li>
+</ul>
+<ol>
+<li><strong>初始化</strong>：維護distTo[]陣列記錄每個頂點到樹的最小邊權重</li>
+<li><strong>擴張樹</strong>：
+<ul>
+<li>選擇distTo[]中最小的頂點v，將其對應的邊edgeTo[v]加入MST</li>
+<li>更新v的鄰居w的distTo[w]</li>
+</ul>
+</li>
+<li><strong>終止條件</strong>：當MST包含V−1條邊時停止</li>
+</ol>
+</li>
+<li>
+<p>【最小優先級佇列 實作】</p>
+<p><img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-23.png" alt="最小優先級佇列 API"> <strong>最小優先級佇列 API</strong><br>
+<img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-24.png" alt="最小優先級佇列 概念"> <strong>最小優先級佇列 概念 (紅字是qp[i]) (與上面 eager prim 的圖例沒有關係)</strong><br>
+最小優先級佇列是使用矩陣實作heap(完全二叉樹)</p>
+<ul>
+<li>i代表每個MST外的鄰接點編號</li>
+<li>key[i]代表每個頂點到MST的最近距離，也就是佇列排序的權重(A最小/最優先)</li>
+<li>pq[i]當中的i<em><strong>不是</strong></em>頂點編號，而是矩陣的編號。已知矩陣當中的編號i，想找到a[i]裡面存放的頂點是什麼。例如pq[2]=6代表矩陣當中a[2]的位置是放頂點V[6]。</li>
+<li>qp則是反過來的pq，已知頂點V[i]，求在矩陣當中的index。例如qp[2]=6代表，頂點V[2]放在矩陣a[6]的位置。<br>
+修改權重(key)之後，記得要做swim qp[i] (對實際的物理地址往上游)，確保二叉樹的父節點，優先級必定大於自己。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>比較複雜度
+理論上 <code>prim</code> Elog()會比 <code>kruskal</code> log(E)好一點 因為 E 通常是 V 的平方以上。</p>
+<ol>
+<li>Kruskal
+<img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-26.png" alt="Kruskal"></li>
+<li>prim
+<img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-25.png" alt="prim"></li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+<h1 id="最短路徑有權重的有向圖">最短路徑(有權重的有向圖)</h1>
+<h2 id="權重有向圖的建立">權重有向圖的建立</h2>
+<p><img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-30.png" alt="權重有向邊的實作"> <strong>權重有向邊的實作</strong><br>
+類似先前(圖-5.權重邊圖)的實作，只差在either, other改成from, to(因為有方向性)。</p>
+<p><img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-31.png" alt="權重有向圖的API"></p>
+<p><img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-32.png" alt="權重有向圖的鄰接表實作"></p>
+<h2 id="通用性質">通用性質</h2>
+<h3 id="relax-鬆弛">relax 鬆弛</h3>
+<p><img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-33.png" alt="relax 程式實作">
+在BFS過程當中，輸入你現在遍歷的有向邊，如果發現從起點到邊的終點(distTo[w])有更短的路徑，就更新最短距離。</p>
+<h4 id="relax-證明">relax 證明</h4>
+<ul>
+<li>命題:
+distTo[]中儲存的值，確實是從起點s出發的最短路徑，if and only if:
+<ol>
+<li>起點到自己的距離必須為零: distTo[s]=0</li>
+<li>除非目的v不可從起點抵達，否則distTo[v]是從起點s到目的v的路徑長度</li>
+<li>對每條邊e(from v to w)，需要滿足distTo[w]≤distTo[v]+e.weight()。代表所有走法到w的路徑都&gt;=已經紀錄的最短路徑。</li>
+</ol>
+</li>
+<li>iff反向證明
+<blockquote>
+<p>假設存在一條邊使得
+<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi><mi>i</mi><mi>s</mi><mi>t</mi><mi>T</mi><mi>o</mi><mo stretchy="false">[</mo><mi>w</mi><mo stretchy="false">]</mo><mo>&gt;</mo><mi>d</mi><mi>i</mi><mi>s</mi><mi>t</mi><mi>T</mi><mi>o</mi><mo stretchy="false">[</mo><mi>v</mi><mo stretchy="false">]</mo><mo>+</mo><mi>e</mi><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">distTo[w]&gt;distTo[v]+e.</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal">i</span><span class="mord mathnormal">s</span><span class="mord mathnormal" style="margin-right:0.13889em;">tT</span><span class="mord mathnormal">o</span><span class="mopen">[</span><span class="mord mathnormal" style="margin-right:0.02691em;">w</span><span class="mclose">]</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">&gt;</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">d</span><span class="mord mathnormal">i</span><span class="mord mathnormal">s</span><span class="mord mathnormal" style="margin-right:0.13889em;">tT</span><span class="mord mathnormal">o</span><span class="mopen">[</span><span class="mord mathnormal" style="margin-right:0.03588em;">v</span><span class="mclose">]</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">e</span><span class="mord">.</span></span></span></span>
+則代表當前distTo[w]不是最短路徑，需要被更新為更小的值。</p>
+</blockquote>
+</li>
+<li>iff順向證明
+<img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-34.png" alt="iff順向證明"> 假設最短路徑上的每一條邊都滿足公式，把每一條邊的結果都相加以後，還是會滿足公式(中間的邊可以消掉)。</li>
+</ul>
+<h3 id="初始化">初始化</h3>
+<p>起點距離設為0，其他點距離設為無限大。</p>
+<h2 id="單源最短路徑-具體算法-只有1個起點-沒有終點">單源最短路徑 具體算法 (只有1個起點, 沒有終點)</h2>
+<h3 id="dijkstra-bfs權重不能有負">Dijkstra (BFS)(權重不能有負)</h3>
+<p><img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-35.png" alt="Dijkstra 實作">
+<img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-36.png" alt="Dijkstra 實作">
+Dijkstra 實作
+<img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-37.png" alt="Dijkstra 複雜度"></p>
+<h4 id="dijkstra-複雜度-oelogv">Dijkstra 複雜度 O(E*log(V))</h4>
+<ol>
+<li>初始化 dist[] 陣列：O(V)。接著把起點加到優先隊列O(V)。小計O(V)</li>
+<li>每次從優先隊列取出距離最小的頂點，總共要取V次，每次取出根結點需要logV(因為要刪除+下沉sink操作)。小計O(V*logV)</li>
+<li>E個邊(路徑)，每個邊都要鬆弛每個鄰接頂點。鬆弛(修改優先隊列的權重並且上浮swim)一次的成本是O(logV)。小計O(E*logV)</li>
+<li>合計O(E*logV)</li>
+</ol>
+<h3 id="topological-sort-dag-有向無環圖-dfs圖不能有環">Topological sort, DAG 有向無環圖 (DFS)(圖不能有環)</h3>
+<p><img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-38.png" alt="DAG概念">
+利用DAG線性序列的特性可以找到最短路徑<br>
+假設已經跑過DAG得到一個 Topological sort，照這個順序遍歷頂點，對每個頂點檢查鄰接邊，再對每個邊進行鬆弛操作。因為DAG的特性，所以每個邊都只會恰好被經過一次。
+<img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-41.png" alt="DAG實作"></p>
+<h4 id="topological-sort-複雜度-ove">Topological sort 複雜度 O(V+E)</h4>
+<ol>
+<li>拓撲排序找到DAG 小計O(V+E)</li>
+<li>初始化距離陣列 小計O(V)
+初始化 dist[] 陣列，將所有頂點的距離設為 ∞ 起點設為 0。</li>
+<li>鬆弛所有邊 小計O(V+E)
+<ol>
+<li>遍歷所有頂點（O(V)）：
+按拓撲序依次處理每個頂點 u。</li>
+<li>處理所有邊（O(E)）：
+對每個 u，檢查其所有出邊 u→v，並執行鬆弛操作 dist[v] = min(dist[v], dist[u] + w(u→v))。
+<ul>
+<li>每條邊都只會被處理一次。</li>
+<li>因為直接用dist矩陣操作，不用維護優先隊列，因此每次鬆弛只要常數時間，不像dijkstra需要logV。</li>
+</ul>
+</li>
+</ol>
+</li>
+<li>合計：O(V+E)</li>
+</ol>
+<h3 id="bellman-ford-可以負權重-也可以有環-但是環整體的權重不能是負的">Bellman-Ford (可以負權重, 也可以有環, 但是環整體的權重不能是負的)</h3>
+<p><img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-44.png" alt="Bellman Ford 概念"> <strong>Bellman Ford 概念</strong><br>
+<img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-45.png" alt="Bellman Ford 程式實作"> 一開始先初始化，然後就開始重複v-1次把所有邊都relax，如果做到某次relax都不更新，可以提早終止。</p>
+<h4 id="bellman-ford-複雜度-ove">Bellman-Ford 複雜度 O(VE)</h4>
+<ol>
+<li>初始化距離陣列 dist[] ：將所有節點距離設為 ∞, 起點設為 0。 小計O(V)</li>
+<li>主循環執行 V−1 次： (因為在一個沒有負權重環的圖中，最短路徑最差情況是把所有頂點都連一次，而連接V個頂點只需要V-1個邊。) O(V-1)
+<ul>
+<li>每次都循環都要relax所有邊 O(E)</li>
+<li>小計: O(VE)</li>
+</ul>
+</li>
+<li>再次檢查所有邊是否還能relax，如果還可以，表示圖中有負權重環：小計O(E)</li>
+<li>合計：O(VE)</li>
+</ol>
+<h2 id="三種最短路徑算法-複雜度比較">三種最短路徑算法 複雜度比較</h2>
+<p><img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-43.png" alt="三種最短路徑算法 複雜度比較"> <strong>三種最短路徑算法 複雜度比較</strong></p>
+<h2 id="最短路徑的應用-content-aware-resizing-裁縫拼接">最短路徑的應用 Content-aware resizing 裁縫拼接</h2>
+<p><img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-39.png" alt="Content-aware resizing 概念"> 維持城堡與人不變形，只縮放不重要的背景部分，並且縮放結果看起來也很合理。<br>
+概念上，算法會找出一系列的接縫，接著利用接縫對圖像做縮放。</p>
+<ol>
+<li>首先，我們拿到一張需要縮小的照片</li>
+<li>計算照片中每一個像素的灰階強度</li>
+<li>找到圖中數條強度較低的seams(接縫)
+<img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-42.png" alt="seams方法說明">
+<ul>
+<li>每個像素連接到下方三個鄰居</li>
+<li>weight of pixel設定為影像強度的差異</li>
+<li>找到最短路徑</li>
+<li>這個最短路徑的元素最接近，代表移除或膨脹對整體效果最不明顯</li>
+</ul>
+</li>
+<li><img src="file:///c:\Users\user\Desktop\Practical-Data-Structures-and-Algorithms-113-1-BIME\期末筆記\figure\image-40.png" alt="Seams 在gradient magnitude圖中的結果"> Seams 在gradient magnitude圖中的結果</li>
+<li>接著我們把這些seams拿掉，就可以拿到一張縮小後的照片。</li>
+</ol>
+
+            <script async src="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.js"></script>
+            <script async type="text/javascript">
+/* From extension marp-team.marp-vscode */
+(()=>{var W=Object.defineProperty;var K=(w,h,x)=>h in w?W(w,h,{enumerable:!0,configurable:!0,writable:!0,value:x}):w[h]=x;var o=(w,h)=>W(w,"name",{value:h,configurable:!0});var v=(w,h,x)=>K(w,typeof h!="symbol"?h+"":h,x);(()=>{var w={32:(y,S,g)=>{y.exports=g(924)},924:(y,S)=>{"use strict";var g;g={value:!0};const E={h1:{proto:o(()=>HTMLHeadingElement,"proto"),attrs:{role:"heading","aria-level":"1"},style:"display: block; font-size: 2em; margin-block-start: 0.67em; margin-block-end: 0.67em; margin-inline-start: 0px; margin-inline-end: 0px; font-weight: bold;"},h2:{proto:o(()=>HTMLHeadingElement,"proto"),attrs:{role:"heading","aria-level":"2"},style:"display: block; font-size: 1.5em; margin-block-start: 0.83em; margin-block-end: 0.83em; margin-inline-start: 0px; margin-inline-end: 0px; font-weight: bold;"},h3:{proto:o(()=>HTMLHeadingElement,"proto"),attrs:{role:"heading","aria-level":"3"},style:"display: block; font-size: 1.17em; margin-block-start: 1em; margin-block-end: 1em; margin-inline-start: 0px; margin-inline-end: 0px; font-weight: bold;"},h4:{proto:o(()=>HTMLHeadingElement,"proto"),attrs:{role:"heading","aria-level":"4"},style:"display: block; margin-block-start: 1.33em; margin-block-end: 1.33em; margin-inline-start: 0px; margin-inline-end: 0px; font-weight: bold;"},h5:{proto:o(()=>HTMLHeadingElement,"proto"),attrs:{role:"heading","aria-level":"5"},style:"display: block; font-size: 0.83em; margin-block-start: 1.67em; margin-block-end: 1.67em; margin-inline-start: 0px; margin-inline-end: 0px; font-weight: bold;"},h6:{proto:o(()=>HTMLHeadingElement,"proto"),attrs:{role:"heading","aria-level":"6"},style:"display: block; font-size: 0.67em; margin-block-start: 2.33em; margin-block-end: 2.33em; margin-inline-start: 0px; margin-inline-end: 0px; font-weight: bold;"},span:{proto:o(()=>HTMLSpanElement,"proto")},pre:{proto:o(()=>HTMLElement,"proto"),style:"display: block; font-family: monospace; white-space: pre; margin: 1em 0; --marp-auto-scaling-white-space: pre;"}},A="data-marp-auto-scaling-wrapper",p="data-marp-auto-scaling-svg",c="data-marp-auto-scaling-container",T=class T extends HTMLElement{constructor(){super();v(this,"container");v(this,"containerSize");v(this,"containerObserver");v(this,"svg");v(this,"svgComputedStyle");v(this,"svgPreserveAspectRatio","xMinYMid meet");v(this,"wrapper");v(this,"wrapperSize");v(this,"wrapperObserver");const s=o(t=>([e])=>{const{width:n,height:r}=e.contentRect;this[t]={width:n,height:r},this.updateSVGRect()},"e");this.attachShadow({mode:"open"}),this.containerObserver=new ResizeObserver(s("containerSize")),this.wrapperObserver=new ResizeObserver((...t)=>{s("wrapperSize")(...t),this.flushSvgDisplay()})}static get observedAttributes(){return["data-downscale-only"]}connectedCallback(){this.shadowRoot.innerHTML=`
+<style>
+  svg[${p}] { display: block; width: 100%; height: auto; vertical-align: top; }
+  span[${c}] { display: table; white-space: var(--marp-auto-scaling-white-space, nowrap); width: max-content; }
+</style>
+<div ${A}>
+  <svg part="svg" ${p}>
+    <foreignObject><span ${c}><slot></slot></span></foreignObject>
+  </svg>
+</div>
+    `.split(/\n\s*/).join(""),this.wrapper=this.shadowRoot.querySelector(`div[${A}]`)??void 0;const s=this.svg;this.svg=this.wrapper?.querySelector(`svg[${p}]`)??void 0,this.svg!==s&&(this.svgComputedStyle=this.svg?window.getComputedStyle(this.svg):void 0),this.container=this.svg?.querySelector(`span[${c}]`)??void 0,this.observe()}disconnectedCallback(){this.svg=void 0,this.svgComputedStyle=void 0,this.wrapper=void 0,this.container=void 0,this.observe()}attributeChangedCallback(){this.observe()}flushSvgDisplay(){const{svg:s}=this;s&&(s.style.display="inline",requestAnimationFrame(()=>{s.style.display=""}))}observe(){this.containerObserver.disconnect(),this.wrapperObserver.disconnect(),this.wrapper&&this.wrapperObserver.observe(this.wrapper),this.container&&this.containerObserver.observe(this.container),this.svgComputedStyle&&this.observeSVGStyle(this.svgComputedStyle)}observeSVGStyle(s){const t=o(()=>{const e=(()=>{const n=s.getPropertyValue("--preserve-aspect-ratio");return n?n.trim():`x${(({textAlign:r,direction:l})=>{if(r.endsWith("left"))return"Min";if(r.endsWith("right"))return"Max";if(r==="start"||r==="end"){let d=l==="rtl";return r==="end"&&(d=!d),d?"Max":"Min"}return"Mid"})(s)}YMid meet`})();e!==this.svgPreserveAspectRatio&&(this.svgPreserveAspectRatio=e,this.updateSVGRect()),s===this.svgComputedStyle&&requestAnimationFrame(t)},"t");t()}updateSVGRect(){let s=Math.ceil(this.containerSize?.width??0);const t=Math.ceil(this.containerSize?.height??0);this.dataset.downscaleOnly!==void 0&&(s=Math.max(s,this.wrapperSize?.width??0));const e=this.svg?.querySelector(":scope > foreignObject");if(e?.setAttribute("width",`${s}`),e?.setAttribute("height",`${t}`),this.svg&&(this.svg.setAttribute("viewBox",`0 0 ${s} ${t}`),this.svg.setAttribute("preserveAspectRatio",this.svgPreserveAspectRatio),this.svg.style.height=s<=0||t<=0?"0":""),this.container){const n=this.svgPreserveAspectRatio.toLowerCase();this.container.style.marginLeft=n.startsWith("xmid")||n.startsWith("xmax")?"auto":"0",this.container.style.marginRight=n.startsWith("xmi")?"auto":"0"}}};o(T,"s");let i=T;const m=o((a,{attrs:u={},style:s})=>class extends a{constructor(...t){super(...t);for(const[e,n]of Object.entries(u))this.hasAttribute(e)||this.setAttribute(e,n);this._shadow()}static get observedAttributes(){return["data-auto-scaling"]}connectedCallback(){this._update()}attributeChangedCallback(){this._update()}_shadow(){if(!this.shadowRoot)try{this.attachShadow({mode:"open"})}catch(t){if(!(t instanceof Error&&t.name==="NotSupportedError"))throw t}return this.shadowRoot}_update(){const t=this._shadow();if(t){const e=s?`<style>:host { ${s} }</style>`:"";let n="<slot></slot>";const{autoScaling:r}=this.dataset;r!==void 0&&(n=`<marp-auto-scaling exportparts="svg:auto-scaling" ${r==="downscale-only"?"data-downscale-only":""}>${n}</marp-auto-scaling>`),t.innerHTML=e+n}}},"r");let b;const z=Symbol();let $;const V="marpitSVGPolyfill:setZoomFactor,",C=Symbol(),j=Symbol(),G=o(()=>{const a=navigator.vendor==="Apple Computer, Inc.",u=a?[D]:[],s={then:o(t=>(a?(async()=>{if($===void 0){const e=document.createElement("canvas");e.width=10,e.height=10;const n=e.getContext("2d"),r=new Image(10,10),l=new Promise(d=>{r.addEventListener("load",()=>d())});r.crossOrigin="anonymous",r.src="data:image/svg+xml;charset=utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2210%22%20height%3D%2210%22%20viewBox%3D%220%200%201%201%22%3E%3CforeignObject%20width%3D%221%22%20height%3D%221%22%20requiredExtensions%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxhtml%22%3E%3Cdiv%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxhtml%22%20style%3D%22width%3A%201px%3B%20height%3A%201px%3B%20background%3A%20red%3B%20position%3A%20relative%22%3E%3C%2Fdiv%3E%3C%2FforeignObject%3E%3C%2Fsvg%3E",await l,n.drawImage(r,0,0),$=n.getImageData(5,5,1,1).data[3]<128}return $})().then(e=>{t?.(e?[D]:[])}):t?.([]),s),"then")};return Object.assign(u,s)},"g");let H,O;function D(a){const u=typeof a=="object"&&a.target||document,s=typeof a=="object"?a.zoom:a;window[j]||(Object.defineProperty(window,j,{configurable:!0,value:!0}),document.body.style.zoom=1.0001,document.body.offsetHeight,document.body.style.zoom=1,window.addEventListener("message",({data:e,origin:n})=>{if(n===window.origin)try{if(e&&typeof e=="string"&&e.startsWith(V)){const[,r]=e.split(","),l=Number.parseFloat(r);Number.isNaN(l)||(O=l)}}catch(r){console.error(r)}}));let t=!1;Array.from(u.querySelectorAll("svg[data-marpit-svg]"),e=>{var n,r,l,d;e.style.transform||(e.style.transform="translateZ(0)");const f=s||O||e.currentScale||1;H!==f&&(H=f,t=f);const P=e.getBoundingClientRect(),{length:Z}=e.children;for(let F=0;F<Z;F+=1){const k=e.children[F];if(k.getScreenCTM){const _=k.getScreenCTM();if(_){const Y=(r=(n=k.x)===null||n===void 0?void 0:n.baseVal.value)!==null&&r!==void 0?r:0,U=(d=(l=k.y)===null||l===void 0?void 0:l.baseVal.value)!==null&&d!==void 0?d:0,J=k.children.length;for(let R=0;R<J;R+=1){const N=k.children[R];if(N.tagName==="SECTION"){const{style:q}=N;q.transformOrigin||(q.transformOrigin=`${-Y}px ${-U}px`),q.transform=`scale(${f}) matrix(${_.a}, ${_.b}, ${_.c}, ${_.d}, ${_.e-P.left}, ${_.f-P.top}) translateZ(0.0001px)`;break}}}}}}),t!==!1&&Array.from(u.querySelectorAll("iframe"),({contentWindow:e})=>{e?.postMessage(`${V}${t}`,window.origin==="null"?"*":window.origin)})}o(D,"u");function B({once:a=!1,target:u=document}={}){const s=function(t=document){if(t[C])return t[C];let e=!0;const n=o(()=>{e=!1,delete t[C]},"i");Object.defineProperty(t,C,{configurable:!0,value:n});let r=[],l=!1;(async()=>{try{r=await G()}finally{l=!0}})();const d=o(()=>{for(const f of r)f({target:t});l&&r.length===0||e&&window.requestAnimationFrame(d)},"r");return d(),n}(u);return a?(s(),()=>{}):s}o(B,"v"),H=1,O=void 0;const I=B,M=Symbol(),L=o((a=document)=>{if(typeof window>"u")throw new Error("Marp Core's browser script is valid only in browser context.");if(((e=document)=>{const n=window[z];n||customElements.define("marp-auto-scaling",i);for(const r of Object.keys(E)){const l=`marp-${r}`,d=E[r].proto();(b??(b=!!document.createElement("div",{is:"marp-auto-scaling"}).outerHTML.startsWith("<div is"),b))&&d!==HTMLElement?n||customElements.define(l,m(d,{style:E[r].style}),{extends:r}):(n||customElements.define(l,m(HTMLElement,E[r])),e.querySelectorAll(`${r}[is="${l}"]`).forEach(f=>{f.outerHTML=f.outerHTML.replace(new RegExp(`^<${r}`,"i"),`<${l}`).replace(new RegExp(`</${r}>$`,"i"),`</${l}>`)}))}window[z]=!0})(a),a[M])return a[M];const u=B({target:a}),s=o(()=>{u(),delete a[M]},"n"),t=Object.assign(s,{cleanup:s,update:o(()=>L(a),"update")});return Object.defineProperty(a,M,{configurable:!0,value:t}),t},"y");S.browser=L,g=L,g=I}},h={};function x(y){var S=h[y];if(S!==void 0)return S.exports;var g=h[y]={exports:{}};return w[y](g,g.exports,x),g.exports}o(x,"__webpack_require__");var Q={};(()=>{"use strict";var y=x(32);function S(){let p,c;const i=o(()=>{const m=document.getElementById("__marp-vscode"),b=!!m;p!==b?(document.body.classList.toggle("marp-vscode",b),b?c=(0,y.browser)():(c?.cleanup(),c=void 0),p=b):b&&c?.update(),p?(m&&g(m),E()):A()},"updateCallback");window.addEventListener("load",()=>window.setTimeout(i,100)),window.addEventListener("vscode.markdown.updateContent",i),i()}o(S,"preview");const g=o(p=>{p.querySelectorAll("[is]").forEach(c=>{if(c.nodeName.includes("-")||document.createElement(c.nodeName).constructor!==c.constructor)return;const{outerHTML:m}=c;c.outerHTML=m,console.debug("[marp-vscode] Custom element has been upgraded forcibly:",m.slice(0,m.indexOf(">")+1||void 0))})},"forceUpgradeCustomElements"),E=o(()=>{const p=document.querySelectorAll("style:not(#__marp-vscode-style,#_defaultStyles,[data-marp-vscode-body])"),c=document.querySelectorAll('link[rel="stylesheet"][href]:not([href*="marp-vscode"])');p.forEach(i=>{i.closest("#__marp-vscode")||(i.dataset.marpVscodeBody=i.textContent??"",i.textContent="")}),c.forEach(i=>{if(i.closest("#__marp-vscode"))return;const{href:m}=i;i.dataset.marpVscodeHref=m,i.removeAttribute("href")})},"removeStyles"),A=o(()=>{const p=document.querySelectorAll("style[data-marp-vscode-body]"),c=document.querySelectorAll("link[data-marp-vscode-href]");p.forEach(i=>{i.textContent=i.dataset.marpVscodeBody||"",delete i.dataset.marpVscodeBody}),c.forEach(i=>{i.href=i.dataset.marpVscodeHref||"",delete i.dataset.marpVscodeHref})},"restoreStyles");S()})()})();})();
+
+</script>
+
+        </body>
+        </html>

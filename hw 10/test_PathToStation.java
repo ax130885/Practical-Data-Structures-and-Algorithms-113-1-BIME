@@ -80,8 +80,11 @@ class PathToStation {
     private void aStarSearch() {
         // 優先隊列按fScore排序，(fScore, y, x)
         PriorityQueue<int[]> openSet = new PriorityQueue<>(Comparator.comparingInt(a -> a[0]));
+
+        // 把起點加到pq
         openSet.add(new int[] { fScore[initPos[0]][initPos[1]], initPos[0], initPos[1] });
 
+        // dijkstra主迴圈 跑到pq沒人，每次執行，把鄰居全加到pq中
         while (!openSet.isEmpty()) {
             int[] current = openSet.poll();
             int currentY = current[1];

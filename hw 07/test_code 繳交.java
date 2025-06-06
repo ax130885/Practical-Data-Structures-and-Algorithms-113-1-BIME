@@ -96,6 +96,11 @@ class GalacticClustering {
             clusters.get(mergeA).alive = false; // 原本的兩群標記為死亡
             clusters.get(mergeB).alive = false;
             clusters.add(merged); // 新群加入到 cluster 列表中
+
+            // 補充: 可能改進
+            // 1. 用 kd-tree 來找最近群，避免遍歷所有群
+            // 2. 將clusters改成使用 結構為 Pair(目標群, 最近群) 的優先隊列管理，key為質心距離
+            // 節省中間層的for loop，不用每次找到最短的兩群。
         }
 
         // Step 3: 收集所有還活著的群體的質心，加入結果清單中

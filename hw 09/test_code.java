@@ -47,7 +47,7 @@ class KruskalMST {
             pq.insert(e);
         }
         // 2. 初始化 Union-find
-        UF uf = new UF(G.V());
+        UF uf = new UF(G.V()); // 建立 頂點個數 V 的 Union-find 結構，初始每個頂點都是獨立的集合
 
         // 3. 貪心選擇邊 & 4. 終止條件
         // 當優先級佇列不為空且 MST 的邊數未達到 V-1 時繼續循環
@@ -60,7 +60,7 @@ class KruskalMST {
 
             // 如果兩個頂點屬於不同的Union才合併並且加入MST（避免環）
             // 如果不滿足則跳過
-            if (uf.find(v) != uf.find(w)) {
+            if (uf.find(v) != uf.find(w)) { // find() 用於找出所屬集合的root
                 uf.union(v, w); // 合併兩個Union
                 mst.add(e); // 將邊加入 MST
             }
@@ -121,12 +121,18 @@ class InnovationStudioCabling {
         this.mst = new KruskalMST(G);
 
         // 根據MST構建鄰接表
-        adjacencyList = new HashMap<>();
+        adjacencyList = new HashMap<>(); // 用dictionary來存儲鄰接表
         for (Edge edge : mst.edges()) {
             int v = edge.either();
             int w = edge.other(v);
             int weight = (int) edge.weight();
 
+            // V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction)
+            // 第一個參數是 key，第二個參數是 mappingFunction。
+            // ? super K 表示 mappingFunction 的參數類型可以是 K 或其父類型。
+            // ? extends V 表示 mappingFunction 的返回類型可以是 V 或其子類型。
+            // 如果 key 不存在，則使用 mappingFunction 來建立一個新list。
+            // 如果 key 存在，直接在原來的list後面添加新的節點。
             adjacencyList.computeIfAbsent(v, k -> new ArrayList<>()).add(new int[] { w, weight });
             adjacencyList.computeIfAbsent(w, k -> new ArrayList<>()).add(new int[] { v, weight });
         }
@@ -218,10 +224,10 @@ class InnovationStudioCabling {
         Map<Integer, Integer> nearestPrinter = new HashMap<>(); // 記錄每個節點最近的印表機 index
         Map<Integer, Integer> minDist = new HashMap<>(); // 記錄每個節點到最近印表機的距離
 
-        // 初始化pq用來記錄待擴散的過程
-        // a[0]=目前節點的編號（node）, a[1]=目前節點到起始印表機的累積距離（dist）, a[2]=這條路徑所屬的印表機
-        // index（printer
-        // index）
+        // 初始化pq用來記錄多源擴散的過程
+        // pq的每個節點(a)包含三個參數
+        // a[0]=目前機器的編號, a[1]=目前機器到起始印表機的累積距離（dist）, a[2]=這條路徑所屬的印表機
+        // a, b -> 為 lambda 表達式，用來定義優先隊列的排序規則。
         // 根據距離排序，距離相同時印表機 index 較小的優先
         PriorityQueue<int[]> pq = new PriorityQueue<>(
                 (a, b) -> a[1] != b[1] ? Integer.compare(a[1], b[1]) : Integer.compare(a[2], b[2]));
@@ -239,7 +245,7 @@ class InnovationStudioCabling {
 
         // 多源 Dijkstra 主迴圈 (同時用多個起點的 Dijkstra)
         while (!pq.isEmpty()) {
-            int[] cur = pq.poll();
+            int[] cur = pq.poll(); // 取出目前距離最小的節點
             int node = cur[0], dist = cur[1], printerIdx = cur[2];
             // 如果目前距離比已知最短距離還大，跳過
             if (dist > minDist.get(node))
@@ -288,6 +294,60 @@ class InnovationStudioCabling {
                 // 如果沒有任何印表機服務電腦，則回傳 index 最小的印表機（題目規定）
                 .orElse(printers.stream().min(Integer::compare).orElse(-1));
     }
+
+    // 最熱門印表機的優化方向: 用「超級節點（supernode）」連接所有印表機
+
+    // 在 MST 上額外假想一個「超級節點 S」，並且從 S 到每一臺原本的印表機 p_i 連一條權重為 0 的邊。如此一來，只要從 S 執行一次
+    // Dijkstra，就能同時找到每個節點到最近印表機的最短路徑和來源印表機。
+    // 具體流程：
+    // 在原本的鄰接表 adj 上，把 S 視為額外的唯一源頭。
+    // 對每臺印表機 p，在 adj[S] 加入一條邊 (S → p, 0)；同時在 adj[p] 加入 (p → S, 0)（雖然不需要往回，但保持一致性）。
+    // 初始化資料結構
+
+    // 節點總數為 N，若把 S 設編號為 N，則陣列大小為 N+1。
+    // 準備兩個長度為 N+1 的陣列：
+    // dist[v]：節點 v（包括 S）到來源為 S 的最短距離；初始都設為很大值（∞）。
+    // nearestPrinter[v]：節點 v 最近的真正印表機編號；初始都設為 -1。
+    // 設 dist[S] = 0 並 nearestPrinter[S] = -1（S 本身不是印表機）。
+    // 使用一個 Min Priority Queue 來處理 Dijkstra 中的節點取出，排序邏輯如下：
+    // 先比較「dist 值」小的先取出；
+    // 若 dist 相同，再比較「來源印表機編號」小的先取出。
+    // 開始時，只把 (dist[S] = 0, printer = -1, node = S) 推進佇列。
+    // 當優先佇列不為空時，重複以下步驟：
+
+    // 取出 (d, p, u)
+
+    // d：從超級節點 S 經由印表機 p 抵達節點 u 的最短距離。
+    // p：來源印表機編號。
+    // u：目前節點。
+    // 佇列按「距離小、來源編號小」排列，確保每次取出皆是最新且最優。
+    // 檢查是否過時
+
+    // 若 d > dist[u] 或 p != nearestPrinter[u]，代表已有更短或更新的來源印表機，可跳過。
+    // 更新鄰居 (u → v, w)
+
+    // 若 u == S（超級節點）：
+    // 這條邊代表「S→v」直接連到印表機 v，邊長為 0，
+    // 設 nd = 0、np = v，比較 nd 與 dist[v]：
+    // 若 0 < dist[v]，更新 dist[v]=0、nearestPrinter[v]=v，並 enqueue (0, v, v)；
+    // 若 0 == dist[v] 且 v < nearestPrinter[v]，也更新 nearestPrinter[v]=v，enqueue (0, v,
+    // v)。
+    // 若 u != S：表示目前 u 已由某印表機 p 到達，且 d = dist[u]。
+    // 對每條 (u → v, w) 計算 nd = d + w、np = p，再比較：
+    // 若 nd < dist[v]，更新 dist[v]=nd、nearestPrinter[v]=p，enqueue (nd, p, v)；
+    // 若 nd == dist[v] 且 p < nearestPrinter[v]，更新 nearestPrinter[v]=p，enqueue (nd,
+    // p, v)。
+    // 重複直到佇列空
+
+    // 最終 dist[v] 記錄每個節點到最近印表機的距離，nearestPrinter[v] 記下對應印表機。
+    // 只要查 nearestPrinter[c]，即可得知電腦節點 c 要使用哪臺印表機。
+    // 統計印表機使用量
+
+    // Dijkstra 完成後，對每個原本的「Computer」節點 c，其 nearestPrinter[c] 就是該電腦距離最近且編號最小的印表機。
+    // 用一個 Map 或陣列，把每臺印表機的使用次數初始化為 0，遍歷所有電腦 c：
+    // 取得 p = nearestPrinter[c]，將該印表機的計數 count[p]++。
+    // 最後在所有印表機中，找出使用次數最多的那一臺；若多臺並列則選擇編號最小者。
+    // 回傳計數最高（若平手則編號最小）的印表機編號，作為最熱門印表機。
 
 }
 

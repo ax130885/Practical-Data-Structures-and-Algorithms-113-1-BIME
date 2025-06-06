@@ -24,6 +24,7 @@ class TestCase {
 
 class Dog_catcher {
     private double[][] territories; // 儲存輸入的領土列表（等同於 boxes）
+    // territories[狗的數量] = [x, y, width, height] // 四個double表示矩形範圍(左下點和寬高)
     private int overlap_threshold; // 儲存輸入的重疊閾值
     private int[] overlapCounts; // 計算結果：每個領土的重疊次數陣列
 
@@ -35,6 +36,8 @@ class Dog_catcher {
     }
 
     /** 核心算法：掃描線算法實現（X軸掃描 + Y軸樹結構優化） */
+    // x軸使用 event driven 靜態管理順序 (最初 sort一次)，
+    // y軸使用 TreeSet (紅黑樹) 可以動態管理順序 (每次增刪都會自動排序)
     private void calculateOverlapsWithSweepLine() {
         List<Event> events = new ArrayList<>();
 
@@ -54,8 +57,8 @@ class Dog_catcher {
         });
 
         /*
-         * 使用 TreeSet 維護當前活動的矩形（按Y座標排序）
-         * 1. 使用自定義的 RectInfo 儲存Y座標和高度
+         * 使用 TreeSet 維護當前活動的矩形（按Y座標排序）// TreeSet, TreeMap 是紅黑樹
+         * 1. 使用自定義的節點 RectInfo 儲存 1. Y座標, 2. 高度, 3. 矩形id
          * 2. 排序規則：先按Y下邊界排序，若Y相同則按rectId排序（避免重複）
          * 3. 配合 HashMap 實現快速刪除操作
          */
@@ -70,26 +73,27 @@ class Dog_catcher {
                 double[] rect = territories[rectId];
                 double y = rect[1]; // 當前矩形的Y下邊界
                 double h = rect[3]; // 當前矩形的高度
+
+                // 將自己的y軸起點,終點,id存到 TreeSet當中排序
                 RectInfo current = new RectInfo(y, h, rectId);
-
-                // 將當前矩形加入活動集合
                 activeRects.add(current);
-                idToRectInfo.put(rectId, current); // 建立映射用於後續刪除
+                idToRectInfo.put(rectId, current); // 同時建立映射用於後續刪除
 
-                /*
-                 * 核心優化：利用 TreeSet 的排序特性快速查找可能重疊的矩形
-                 * 1. 計算當前矩形的Y上邊界 (y + h)
-                 * 2. 使用 headSet(upperBound) 獲取所有Y下邊界 <= 當前矩形Y上邊界的矩形
-                 * 3. 遍歷這些候選矩形檢查Y軸是否真的重疊
-                 */
-                RectInfo upperBound = new RectInfo(y + h, 0, Integer.MAX_VALUE);
+                // 建立一個假節點，把節點y軸起點設為(真正的y+h)，因為節點是用起點排序，
+                // 用於下一步找出所有其他矩形當中，起點小於自己矩形終點的其他矩形
+                // 因為事件是用起點排序，所以只能找到 別人起點 < 自己頂點，無法找到別人頂點 < 自己起點。
+                RectInfo upperBound = new RectInfo(y + h, 0, Integer.MAX_VALUE); // 識別碼使用 MAX_VALUE 避免與已有矩形ID衝突
+
+                // 建立候選節點，避免後續遍歷所有點
+                // 從 headSet(): 從 TreeSet 當中取出所有 <= 的節點。 inclusive=F代表"<",inclusive=T代表"<="
                 NavigableSet<RectInfo> candidates = activeRects.headSet(upperBound, true);
 
-                // 與候選矩形比較Y軸重疊
+                // 將自己的節點 與所有候選節點比較
                 for (RectInfo candidate : candidates) {
-                    if (candidate.rectId == rectId)
+                    if (candidate.rectId == rectId) // 跳過自己
                         continue; // 跳過自己
-                    // 檢查候選矩形的Y上邊界 (candidate.y + candidate.h) 是否 >= 當前矩形的Y下邊界 (y)
+                    // 因為候選起點已經小於等於當前終點 (前一步篩的)，
+                    // 所以只需要if檢查候選終點 >= 當前起點，就把重疊次數++
                     if (candidate.y + candidate.h >= y) {
                         overlapCounts[rectId]++; // 當前矩形重疊次數+1
                         overlapCounts[candidate.rectId]++; // 被比較的矩形重疊次數+1
@@ -106,7 +110,7 @@ class Dog_catcher {
         }
     }
 
-    /** 自定義類別：用於在 TreeSet 中儲存矩形Y軸信息 */
+    /** 自定義紅黑樹(TreeSet)的節點：用於儲存矩形的Y軸資訊 */
     private static class RectInfo implements Comparable<RectInfo> {
         double y; // 矩形的Y下邊界
         double h; // 矩形的高度
@@ -128,7 +132,7 @@ class Dog_catcher {
         }
     }
 
-    /** 事件類別（用於掃描線算法） */
+    /** 事件類別（用於X軸掃描） */
     private static class Event {
         double position; // 事件位置（X座標）
         boolean isStart; // 是否為矩形開始事件
@@ -141,7 +145,7 @@ class Dog_catcher {
         }
     }
 
-    // 返回需移除的狗索引（與原始版本相同）
+    // 返回答案:需移除的index
     public int[] dogs_to_remove() {
         ArrayList<Integer> result = new ArrayList<>();
         for (int i = 0; i < overlapCounts.length; i++) {
@@ -152,7 +156,7 @@ class Dog_catcher {
         return result.stream().mapToInt(i -> i).toArray();
     }
 
-    // 測試主程式（與原始版本相同）
+    // 測試主程式
     public static void main(String[] args) {
         String filePath = "testdatas\\testcases.json";
         Gson gson = new Gson();
